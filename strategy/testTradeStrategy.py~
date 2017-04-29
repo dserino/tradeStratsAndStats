@@ -1,0 +1,26 @@
+#!/usr/bin/python
+import urllib2
+import sys
+import math
+
+# yahoo finance api
+# https://greenido.wordpress.com/2009/12/22/work-like-a-pro-with-yahoo-finance-hidden-api/
+
+def main():
+    ### parse inputs ###
+
+    ### (down)load stock data ###
+
+    ### save data if necessary to avoid downloading again ##
+    pass
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()

@@ -56,25 +56,28 @@ ps=0.7
 # time for funds to settle
 hp=1
 
-if [ $iRun=1 ]
+if [ "$iRun" = "1" ]
 then
     symbols="symbolFiles/testSymbols.txt"
-    saveFile="saveFiles/testSymbols_save_1.txt"
-    
-    # use inputs from above
-    ./testTradeStrategy.py -dl $symbols -s $saveFile \
-	-l $saveFile \
-	-y0 $y0 -m0 $m0 -d0 $d0 \
-	-y1 $y1 -m1 $m1 -d1 $d1 \
-	-b0 $b0 -nb $nb -bp $bp \
-	-pl $pl -pp $pp -ps $ps \
-	-hp $hp
-
-    # use default program inputs
-    ./testTradeStrategy.py -dl $symbols -s $saveFile \
-	-l $saveFile 
-
+    saveFile="saveFiles/testSymbols_save_1.p"
 
 else
     echo "invalid iRun number"
+    exit
 fi
+
+if [ "$1" = "1" ]
+then
+    loadFile=""
+else
+    loadFile=$saveFile
+fi
+
+# use inputs from above
+./testTradeStrategy.py -dl $symbols -s $saveFile \
+		       -l $loadFile \
+		       -y0 $y0 -m0 $m0 -d0 $d0 \
+		       -y1 $y1 -m1 $m1 -d1 $d1 \
+		       -b0 $b0 -nb $nb -bp $bp \
+		       -pl $pl -pp $pp -ps $ps \
+		       -hp $hp

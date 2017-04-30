@@ -2,7 +2,9 @@
 import urllib2
 import sys
 import math
+import pickle
 from dataDownloadFunctions import *
+from statisticsFunctions import *
 
 ######
 # Usage:
@@ -30,6 +32,8 @@ from dataDownloadFunctions import *
 ######
 # Todo:
 # - consider consistent stream of money coming into account
+# - need to save symbols too
+#
 
 ######
 # Useful resources:
@@ -41,14 +45,27 @@ from dataDownloadFunctions import *
 
 def main():
     ### parse inputs and download/save data if necessary ###
-    parseInputs()
-
-    ### parse data ###
-
-    ### analyze data ###
-
+    inputs = parseInputs()
+    Symbols = inputs[0]
+    AllData = inputs[1]
+    b0 = inputs[2]
+    nb = inputs[3]
+    bp = inputs[4]
+    pl = inputs[5]
+    pp = inputs[6]
+    ps = inputs[7]
+    hp = inputs[8]
+    Ns = len(Symbols)
+    
     ### test data if necessary ###
+    
 
+    ### get statistics ###
+    stats = CalculateNStdDev(AllData,10,Ns,4)
+    Mu    = stats[0]
+    Sigma = stats[1]
+    Kappa = stats[2]
+    
     ### initialize simulation ###
 
     ### perform simulation ###
@@ -59,11 +76,26 @@ def main():
 
 
 def parseInputs():
+    # Parse inputs, return the following 
+    # (Symbols,AllData,b0,nb,bp,pl,pp,ps,hp)
+    #
+    # The columns are organized by
+    # [date of quote, open, high, low, close, volume, adj close]
+    #
+    # Case 1:
+    #   - a file with a list of symbols is read, then data from start date
+    #     to end date is downloaded from yahoo finance
+    # Case 2:
+    #   - save file from previous run data is inputted to circumvent download process
+    #
+    # 
+
+    
     print ">> parsing inputs"
 
     ### must have at least 3 inputs
     if len(sys.argv) < 3:
-        print "not enough inputs supplied"
+        print ">> not enough inputs supplied"
         usage()
     
     ### first try finding a load file
@@ -72,10 +104,19 @@ def parseInputs():
         i_l = sys.argv.index('-l')
 
         # open file of data
-        
-        # todo, for now, loading capability is not implemented
-        assert(0==1)
+        l_filename = sys.argv[i_l+1]
+        l_f = open(l_filename,'r')
+        package = pickle.load(l_f)
 
+        Symbols = package[0]
+        AllData = package[1]
+
+        assert(len(Symbols) == len(AllData))
+        
+        print ">> successfully loaded data from "+l_filename+ \
+            ", read "+str(len(AllData))+" symbols"
+        l_f.close()
+        
     except:
         # initialize variables
         Symbols = []
@@ -90,7 +131,11 @@ def parseInputs():
             
             # add symbols to a list
             for line in dl_f:
-                Symbols.append(line)
+                if line[0] == "#":
+                    continue
+                n = line.find("\n")
+                Symbols.append(line[0:n])
+                
                 
             # print confirmation to screen
             print ">> opened "+dl_filename+", read "+str(len(Symbols))+" symbols"
@@ -99,7 +144,7 @@ def parseInputs():
         except:
             # if download file does not exist
             # throw an error
-            print "Load file and symbols file not inputted"
+            print ">> Load file and symbols file not inputted"
             usage()
 
         ### get start date and end date
@@ -118,6 +163,7 @@ def parseInputs():
             y1 = eval(sys.argv[i_y1+1])
             m1 = eval(sys.argv[i_m1+1])
             d1 = eval(sys.argv[i_d1+1])
+            
         except:
             # use default start dates
             y0 = 2014
@@ -127,13 +173,80 @@ def parseInputs():
             m1 = 5
             d1 = 1
             
-
+        print ">> Using data from "+ \
+            str(m0)+"/"+str(d0)+"/"+str(y0)+" to "+ \
+            str(m1)+"/"+str(d1)+"/"+str(y1)
+        
         ### download data from internet
-        downloadHistoricalData(Symbols, \
-                               y0,m0,d0, \
-                               y1,m1,d1)
+        print ">> downloading data from yahoo"
+
+        try:
+            AllData = downloadHistoricalData(Symbols, \
+                                             y0,m0,d0, \
+                                             y1,m1,d1)
+        except:
+            print ">> unable to download data"
+            sys.exit()
+            
+        ### save data
+        try:
+            # open and save file
+            i_s = sys.argv.index('-s')
+            s_filename = sys.argv[i_s+1]
+            s_f = open(s_filename,'w+')
+            pickle.dump([Symbols,AllData],s_f)
+            s_f.close()
+            print ">> saved data to "+s_filename
+        except:
+            print ">> file didn't save"
+
+
+    # need other inputs too, todo
+    try:
+        i = sys.argv.index('-b0')
+        b0 = eval(sys.argv[i+1])
         
+        i = sys.argv.index('-nb')
+        nb = eval(sys.argv[i+1])
         
+        i = sys.argv.index('-bp')
+        bp = eval(sys.argv[i+1])
+        
+        i = sys.argv.index('-pl')
+        pl = eval(sys.argv[i+1])
+        
+        i = sys.argv.index('-pp')
+        pp = eval(sys.argv[i+1])
+        
+        i = sys.argv.index('-ps')
+        ps = eval(sys.argv[i+1])
+        
+        i = sys.argv.index('-hp')
+        hp = eval(sys.argv[i+1])
+
+        print ">> input arguments read:"
+    except:
+        b0 = 2000
+        nb = 1
+        bp = 0.9
+        pl = 0.0025
+        pp = 0.0050
+        ps = 0.7
+        hp = 1
+
+        print ">> default values used for inputs:"
+
+    print ">>   bank        = "+str(b0)
+    print ">>   Nbuy        = "+str(nb)
+    print ">>   buyingPower = "+str(bp)
+    print ">>   pLoss       = "+str(pl)
+    print ">>   pProfit     = "+str(pp)
+    print ">>   pSell       = "+str(ps)
+    print ">>   holdPeriod  = "+str(hp)
+
+    ### return everything
+    return (Symbols,AllData, \
+            b0,nb,bp,pl,pp,ps,hp)
 
 
 def usage():

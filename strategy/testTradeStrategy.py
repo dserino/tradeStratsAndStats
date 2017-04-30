@@ -32,7 +32,6 @@ from statisticsFunctions import *
 ######
 # Todo:
 # - consider consistent stream of money coming into account
-# - need to save symbols too
 #
 
 ######
@@ -44,34 +43,82 @@ from statisticsFunctions import *
 #
 
 def main():
+    ######
     ### parse inputs and download/save data if necessary ###
     inputs = parseInputs()
-    Symbols = inputs[0]
-    AllData = inputs[1]
-    b0 = inputs[2]
-    nb = inputs[3]
-    bp = inputs[4]
-    pl = inputs[5]
-    pp = inputs[6]
-    ps = inputs[7]
-    hp = inputs[8]
-    Ns = len(Symbols)
-    
-    ### test data if necessary ###
-    
 
+    # symbols
+    Symbols = inputs[0]
+    Ns = len(Symbols)
+
+    # all data
+    AllData = inputs[1]
+
+    # trade parameters
+    B0          = inputs[2]
+    Nbuy        = inputs[3]
+    buyingPower = inputs[4]
+    pLoss       = inputs[5]
+    pProfit     = inputs[6]
+    pSell       = inputs[7]
+    holdPeriod  = inputs[8]
+
+    ######
     ### get statistics ###
     stats = CalculateNStdDev(AllData,10,Ns,4)
+
+    # mean and std dev
     Mu    = stats[0]
     Sigma = stats[1]
     Kappa = stats[2]
-    
+
+    ######
+    ### test data if necessary ###
+    # todo, have a debug flag, generate plots to
+    # check data
+
+    ######
     ### initialize simulation ###
+    # account value
+    AV = []
+    # bank balance
+    B = []
+    # value of positions
+    VP = []
+    # funds to be settled
+    SF = []
 
+    # initial conditions
+    B.append(B0)
+    AV.append(B0)
+    VP.append(0.0)
+    SF.append(0.0)
+
+    # todo, need classes for position lots, settled funds
+    
+    ######
     ### perform simulation ###
+    while True:
+        ### get date
 
+        ### update bank
 
-    pass
+        ### determine scores for each symbol
+
+        ### settled funds
+        # release settled funds to bank
+        
+        ### determine to sell positions or not
+
+        ### determine to buy or not
+
+        ### calculate value
+
+        ### print out days decisions
+
+        
+        break
+
 
 
 

@@ -5,6 +5,7 @@ import math
 import pickle
 from dataDownloadFunctions import *
 from statisticsFunctions import *
+from brokerageClasses import *
 
 ######
 # Usage:
@@ -88,19 +89,25 @@ def main():
     # funds to be settled
     SF = []
 
+    # positions
+    Positions = []
+    # unsettled funds
+    UnsettledFunds = []
+    
     # initial conditions
     B.append(B0)
     AV.append(B0)
     VP.append(0.0)
     SF.append(0.0)
 
-    # todo, need classes for position lots, settled funds
-    
     ######
     ### perform simulation ###
+    # date index
+    n == 0
     while True:
         ### get date
-
+        
+        
         ### update bank
 
         ### determine scores for each symbol

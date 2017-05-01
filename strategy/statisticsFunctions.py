@@ -64,3 +64,6 @@ def CalculateNStdDev(AllData,N,Ns,col):
             
     return (Mu,Sigma,Kappa)
 
+
+def getDate(AllData):
+    pass

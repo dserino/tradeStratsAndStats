@@ -28,8 +28,28 @@ Couple of things to keep in mind when building the database:
 
 *Develop tools to test trading strategies on histroical data*
 
-Update from Dan?
+Dan: I've been working on porting my old strategy simulator matlab code to python. Right now the organization is
+testTradeStrategy.py runs the strategy simulator on historical data. 
+dataDownloadFunctions.py contains useful functions for using yahoo's API. For a given symbol and range of dates, historical data (open, close, high, low, volume, etc.) can be obtained.
+statisticsFunctions.py will have functions that calculate technical indicators and our custom indicators used by the simulation.
+brokerageClasses.py contains classes for position lots (number of shares bought at the same time/price) and unsettled funds (funds that take ~3 days to be released to you after a sell).
+Currently implemented is
 
+1) Parsing inputs: parameters for the simulation and a file of symbols is read. For a given strategy, I think it is better to have a small finite list of (O(10) - O(100)) symbols which we are trading that strategy with.
+2) Downloading data from yahoo: For given symbols, data is downloaded. Code gives an option to save data to avoid downloading data twice.
+3) Initializing simulation
+
+What's left to do includes:
+
+1) Finish porting previous code. The simulation runs for each trading day and has the structure. The key difference between different strategies lies in the sell and buy functions. I will implement my version first to get a working code, but my vision for our work is to figure out the best analyses to run and come up with 'good' buy and sell functions.
+     - Get date
+     - If funds settle, release to bank
+     - Run analysis to feed into buy/sell decisions
+     - Determine to sell any positions or not
+     - Determine to buy any stocks
+     - Calculate account value
+     - Print out days decisions
+2) Integrate code with SQL to grab historical data from our databases. For optimizing a good trade strategy, we may not want to download data very frequently, therefore SQL can cut down on time and lessen the stress on yahoo servers. Once we know what symbols we want, we will want to download current data in our codes. The end goal is to write a (separate) code which reccommends real time trading decisions.
 
 *Research and Test trading strategies and collect data*
 

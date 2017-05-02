@@ -14,6 +14,7 @@ Primary goals include (TODO)
 **Detailed Status**
 
 *Build Historical Database*
+
 Eddie: I downloaded SQL Server onto my desktop computer. Turns out $75 doesn't buy you a whole lot of processing power, and my desktop is pretty darn slow. So I've setup a PostgreSQL database on my ubuntu laptop for now, and I'm looking to upload the stock data into the database in a meaningful and manageable way. Python has several PostgreSQL modules, so connecting to the database should be okay once we learn the modules. If they're anything like MySQLdb, then we're already set because that's a walk in the park.
 
 Couple of things to keep in mind when building the database:
@@ -26,16 +27,20 @@ Couple of things to keep in mind when building the database:
 
 
 *Develop tools to test trading strategies on histroical data*
+
 Update from Dan?
 
 
 *Research and Test trading strategies and collect data*
+
 -- No update --
 
 
 *Perform data analysis to model optimal trading strategy for stocks*
+
 -- No update --
 
 
 *Reconnect pystock to Yahoo API*
+
 -- No update --

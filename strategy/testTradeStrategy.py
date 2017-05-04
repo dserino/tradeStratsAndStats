@@ -63,7 +63,8 @@ def main():
     pProfit     = inputs[6]
     pSell       = inputs[7]
     holdPeriod  = inputs[8]
-
+    minBuyScore = -2.0
+    
     ######
     ### get statistics ###
     stats = CalculateNStdDev(AllData,10,Ns,4)
@@ -102,21 +103,42 @@ def main():
 
     ######
     ### perform simulation ###
+    checkDates(AllData,Symbols,Ns)
+    N = len(AllData[0])
+
+    print ">> starting simulation"
     # date index
-    n == 0
-    while True:
-        ### get date
-        
-        
+    for n in range(0,N):
         ### update bank
+        B.append(B[n])
 
+        ### todays decisions
+        TodaysDecisions = []
+        
         ### determine scores for each symbol
-
+        scores = GetScores(Kappa,n,minBuyScore,Nbuy,Ns)
+        s_K       = scores[0]
+        perm      = scores[1]
+        Nbuy_true = scores[2]
+        
         ### settled funds
         # release settled funds to bank
-        
+        s = 0
+        while s < len(UnsettledFunds):
+            # substract days from each fund
+            UnsettledFunds[s].days_left -= 1
+            
+            if SettledFunds[s].days_left == 0:
+                # remove and add to bank
+                B[n+1] += UnsettledFunds[s].amount
+                TodaysDecisions.append("$%6.2f settled" % UnsettledFunds[s].amount)
+                UnsettledFunds.pop(s)
+            else:
+                s += 1
+            
         ### determine to sell positions or not
-
+        
+        
         ### determine to buy or not
 
         ### calculate value
@@ -124,7 +146,6 @@ def main():
         ### print out days decisions
 
         
-        break
 
 
 

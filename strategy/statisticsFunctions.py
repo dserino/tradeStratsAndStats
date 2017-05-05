@@ -26,7 +26,7 @@ def CalculateNStdDev(AllData,N,Ns,col):
         for i_d in range(0,N_days):
 
             ### before i_d reaches N, put 0 in element
-            if i_d < N:
+            if i_d < N-1:
                 mu.append(0)
                 sigma.append(0)
                 kappa.append(0)
@@ -113,8 +113,8 @@ def GetScores(Kappa,n,minBuyScore,Nbuy,Ns):
     # if kappa is lower than minimum, than we can buy
     Nbuy_true = 0
     for k in range(0,Nbuy):
-        if Kappa[perm[k]] < minBuyScore:
+        if kappa_[perm[-1-k]] < minBuyScore:
             Nbuy_true += 1
         
     
-    return (s_K,perm,Nbuy_true)
+    return (s_K,perm,Nbuy_true,kappa_)

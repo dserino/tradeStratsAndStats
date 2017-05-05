@@ -27,13 +27,14 @@ from brokerageClasses import *
 #   -pp pProfit     --sell security when percentage gain is above pPlofit
 #   -ps pSell       --sell this percentage of position 
 #   -hp holdPeriod  --time for funds to settle
+#   -db debugMode   --user hits enter to advance
 #
 # -dl or -l is required
 
 ######
 # Todo:
-# - consider consistent stream of money coming into account
-#
+# - Consider consistent stream of money coming into account
+# - Make a simulator out of this. Ask user for inputs
 
 ######
 # Useful resources:
@@ -73,7 +74,8 @@ def main():
     pProfit     = inputs[6]
     pSell       = inputs[7]
     holdPeriod  = inputs[8]
-    minBuyScore = -2.0
+    debugMode   = inputs[9]
+    minBuyScore = -1.0
     
     ######
     ### get statistics ###
@@ -116,9 +118,39 @@ def main():
     checkDates(AllData,Symbols,Ns)
     N = len(AllData[0])
 
+    # statistics to keep track of
+    total_positive_gain = [0.]
+    total_negative_gain = [0.]
+    total_invested = [[]]
+    total_profit = [[]]
+    for k in range(0,Ns):
+        total_invested[0].append(0.)
+        total_profit[0].append(0.)
+        
+    current_year = AllData[0][0][n_date][0:4]
+        
     print ">> starting simulation"
     # date index
-    for n in range(0,20):
+    for n in range(0,N):
+        ### get date
+        year = AllData[0][n][n_date][0:4]
+        if year != current_year:
+            if n != 0:
+                print ">> happy new year!"
+            current_year = year
+            total_positive_gain.append(0.)
+            total_negative_gain.append(0.)
+            total_invested.append([])
+            total_profit.append([])
+            for k in range(0,Ns):
+                total_invested[-1].append(0.)
+                total_profit[-1].append(0.)
+
+        # print total_invested
+        # print total_profit
+        # print total_positive_gain
+        # print total_negative_gain
+        
         ### update bank
         B.append(B[n])
 
@@ -128,9 +160,11 @@ def main():
         ### determine scores for each symbol
         # todo, check if indeces are right here, need to use past data
         scores = GetScores(Kappa,n,minBuyScore,Nbuy,Ns)
-        # s_K       = scores[0]
-        # order     = scores[1]
-        # Nbuy_true = scores[2]
+        s_K       = scores[0]
+        order     = scores[1]
+        Nbuy_true = scores[2]
+        kappa_    = scores[3]
+        # print kappa_
         # print s_K
         # print order
         # print Nbuy_true
@@ -143,7 +177,7 @@ def main():
             # substract days from each fund
             UnsettledFunds[s].days_left -= 1
             
-            if SettledFunds[s].days_left == 0:
+            if UnsettledFunds[s].days_left == 0:
                 # remove and add to bank
                 B[n+1] += UnsettledFunds[s].amount
                 TodaysDecisions.append("$%6.2f settled" % UnsettledFunds[s].amount)
@@ -171,8 +205,8 @@ def main():
                 
                 # sell percentage of holdings
                 # todo, figure out how many shares to sell
-                if Positions[p].current_value >= Positions.exit_high:
-                    nShares = ceil(pSell*Positions[p].n_shares)
+                if Positions[p].current_value >= Positions[p].exit_high:
+                    nShares = math.ceil(pSell*Positions[p].n_shares)
                 else:
                     nShares = Positions[p].n_shares
                     
@@ -184,26 +218,22 @@ def main():
                 net_gain = (Positions[p].current_value \
                             -Positions[p].cost_basis/(Positions[p].n_shares*1.0))*nShares
 
+                # fill in for end statistics
+                if net_gain > 0:
+                    total_positive_gain[-1] += net_gain
+                else:
+                    total_negative_gain[-1] += net_gain
+                total_profit[-1][k] += net_gain
+                
                 # keep number of old shares
                 old_n_shares = Positions[p].n_shares
                 # update position lot to reflect shares sold
-                Positions[p].n_shares = Positions[p].nshares-nShares
+                Positions[p].n_shares -= nShares
                 # total amount made from sell (not profit)
                 amount = nShares*Positions[p].current_value
 
-                # set new exits for rest of shares
-                # exit low is a break even
-                Positions[p].exit_low = Postitions[p].cost_basis \
-                                        /(Positions[p].n_shares*1.0)
-                # exit high is 1+pProfit times greater than current value
-                Positions[p].exit_high = Positions[p].current_value*(1+pProfit)
-
-                # adjust cost basis
-                Positions[p].cost_basis = Positions[p].cost_basis \
-                                        *Positions[p].n_shares/(old_n_shares*1.0)
-                
                 # add message for today's decisions
-                TodaysDecisions.append(("sell %6d shares of %6s at $%6.2f (%.2f%%), " \
+                TodaysDecisions.append(("sell %6d shares of %6s at $%6.2f (%5.2f%%), " \
                                         % (nShares,Symbols[k], \
                                            Positions[p].current_value,gain)) + \
                                        ("net gain = $%6.2f" % (net_gain)))
@@ -211,12 +241,29 @@ def main():
                 # add to settled funds
                 UnsettledFunds.append(unsettledFunds(amount,holdPeriod))
 
-            if Positions[p].n_shares == 0:
-                # remove position
-                Positions.pop(p)
-            else:
-                p += 1
-            
+                if Positions[p].n_shares == 0:
+                    Positions.pop(p)
+                    continue
+                else:
+                    # set new exits for rest of shares
+                    # exit low is a break even
+                    Positions[p].exit_low = Positions[p].cost_basis \
+                                            /(Positions[p].n_shares*1.0)
+                    # exit high is 1+pProfit times greater than current value
+                    Positions[p].exit_high = Positions[p].current_value*(1+pProfit)
+
+                    # adjust cost basis
+                    Positions[p].cost_basis = Positions[p].cost_basis \
+                                              *Positions[p].n_shares/(old_n_shares*1.0)
+
+
+
+            # if Positions[p].n_shares == 0:
+            #     # remove position
+            #     Positions.pop(p)
+            # else:
+            p += 1
+                
         ### determine to buy or not
         todaysFunds = buyingPower*B[n+1]
         for nb in range(Nbuy_true):
@@ -228,11 +275,13 @@ def main():
 
             # number of shares
             # todo determine when to buy/what price
-            nShares = floor(availableFunds/AllData[k][n][n_open])
+            nShares = math.floor(availableFunds/AllData[k][n][n_close])
             if nShares > 0:
-                buyPrice = AllData[k][n][n_open]
+                buyPrice = AllData[k][n][n_close]
                 
                 cost = nShares*buyPrice
+
+                total_invested[-1][k] += cost
                 
                 # subtract from account
                 todaysFunds = todaysFunds-cost
@@ -243,7 +292,7 @@ def main():
                 
                 # print decision
                 TodaysDecisions.append("buy  %6d shares of %6s at $%6.2f" % \
-                                       (nShares,symbols[k],buyPrice))
+                                       (nShares,Symbols[k],buyPrice))
 
         ### calculate value
         Value = CalculateValue(B[n+1],Positions,UnsettledFunds)
@@ -261,9 +310,63 @@ def main():
         print "  Unsettled Funds: $%.2f" % SF[n+1]
         print "  Bank Value:      $%.2f" % B[n+1]
         print "  Account Value:   $%.2f" % AV[n+1]
-        raw_input("")
+        if debugMode:
+            if n == 0:
+                raw_input(">> hit [enter] to advance ")
+                print ""
+            else:
+                raw_input("")
         
     # plotting
+    # print some performance stats
+    # total positive gain
+    # total negative gain
+    # performance by symbol
+    # total invested
+    # total profit
+    #
+
+    print ""
+    print "###"
+    print "###"
+    print "###"
+    print "###"
+    print "###"
+    print "# Trade Strategy Performance:"
+    
+    current_year = eval(AllData[0][0][n_date][0:4])
+    for n_year in range(len(total_positive_gain)):
+        print "###"
+        print "# year: "+str(current_year)
+        
+        print "%7s  %14s  %12s %14s" % ("symbol","total invested", \
+                                     "total profit","percent profit")
+        for k in range(Ns):
+            if total_invested[n_year][k] == 0:
+                print "%7s  $%13.2f  $%11.2f " % \
+                    (Symbols[k],total_invested[n_year][k], \
+                     total_profit[n_year][k])
+            else:
+                print "%7s  $%13.2f  $%11.2f %13.2f%%" % \
+                    (Symbols[k],total_invested[n_year][k], \
+                     total_profit[n_year][k], \
+                     total_profit[n_year][k] \
+                     /total_invested[n_year][k]*100.0)
+
+
+        print ""
+        print "total positive gain: $%9.2f" % (total_positive_gain[n_year])
+        print "total negative gain: $%9.2f" % (total_negative_gain[n_year])
+        print "net gain:            $%9.2f" % (total_positive_gain[n_year]+ \
+                                                 total_negative_gain[n_year])
+        print "win/loss ratio:       %9.2f" % -(total_positive_gain[n_year]/ \
+                                                  total_negative_gain[n_year])
+
+        current_year += 1
+        print ""
+    
+
+        
 
 
 def CalculateValue(B,Positions,UnsettledFunds):
@@ -284,6 +387,8 @@ def CalculateValue(B,Positions,UnsettledFunds):
     AV = PV+SF+B
 
     return (AV,SF,PV)
+
+
 
 
 def parseInputs():
@@ -447,6 +552,12 @@ def parseInputs():
 
         print ">> default values used for inputs:"
 
+    try:
+        i = sys.argv.index('-db')
+        db = True
+    except:
+        db = False
+        
     print ">>   bank        = "+str(b0)
     print ">>   Nbuy        = "+str(nb)
     print ">>   buyingPower = "+str(bp)
@@ -454,10 +565,11 @@ def parseInputs():
     print ">>   pProfit     = "+str(pp)
     print ">>   pSell       = "+str(ps)
     print ">>   holdPeriod  = "+str(hp)
-
+    print ">>   debugMode   = "+str(db)
+    
     ### return everything
     return (Symbols,AllData, \
-            b0,nb,bp,pl,pp,ps,hp)
+            b0,nb,bp,pl,pp,ps,hp,db)
 
 
 def usage():

@@ -51,7 +51,7 @@ pl=.0025
 pp=.0050
 
 # sell this percentage of position 
-ps=0.7
+ps=0.9
 
 # time for funds to settle
 hp=1
@@ -73,6 +73,13 @@ else
     loadFile=$saveFile
 fi
 
+if [ "$2" = "1" ]
+then
+    db="-db"
+else
+    db=""
+fi
+
 # use inputs from above
 ./testTradeStrategy.py -dl $symbols -s $saveFile \
 		       -l $loadFile \
@@ -80,4 +87,6 @@ fi
 		       -y1 $y1 -m1 $m1 -d1 $d1 \
 		       -b0 $b0 -nb $nb -bp $bp \
 		       -pl $pl -pp $pp -ps $ps \
-		       -hp $hp
+		       -hp $hp $db
+
+

@@ -1,0 +1,16 @@
+To run strategy simulator, edit parameters in run.sh. Code uses symbols in
+designated file found in /strategy/symbolFiles/ directory.
+Use
+>> ./run.sh [dl] [db]
+to run. [dl] and [db] are optional inputs.
+ - If [dl] (download) is 1, then code will download data from yahoo and save to a file. Otherwise,
+   saved data is used for simulation.
+ - If [db] (debug) is 1, then code will prompt you hit enter each day of simulation. Otherwise,
+   code will run through simulation and print a lot of output to screen. Use
+   ./run.sh 0 1 >> output.txt
+   to redirect output to file.
+
+At the end some trading statistics are printed. This includes symbol specific performance
+for each year, total gain for each year, and win/loss ratios.
+   
+

@@ -12,15 +12,15 @@ function ReadInYahooFinanceData(dir,filename,SaveFile, ...
     else
       if tline(1) ~= '#'
         symbols{k} = tline;
+        k = k+1;
       end
-      k = k+1;
     end
   end
   fclose(fid);
 
   Ns = length(symbols);
   data = cell(1,Ns);
-
+  
   fprintf('> Read %d symbols \n',Ns);
 
   %% get data from yahoo finance

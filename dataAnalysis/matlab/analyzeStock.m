@@ -64,8 +64,7 @@ n_adj_close = 7;
 % this will keep things organized and reduce the need to copy above
 % code for each file
 % iTry = 1; plot multiple things 
-iTry = 2; % use svd to predict next days price
-
+iTry = 2; % linear regression
 
 % make sure that dates agree for each symbol
 CheckDates(data,symbols);
@@ -138,53 +137,53 @@ if iTry == 1
     fprintf('%7s %6.2f %6.2f%% %6.2f%% \n',symbols{k},WinLossRatio(k),Mu_p_i(k),Sigma_p_i(k));
   end
 elseif iTry == 2
-  % try to predict trailing average with svd
-  % get mu sigma and kappa
-  [Mu,Sigma,Kappa] = CalculateNStdDev(Close,Open,N,Ns,10);
+  k = 1;
   
-  % start predicting data after n_start
-  n_start = 100;
-  % grab data from this long ago when predicting future values
-  n_grab = 75;
-  % use this many points for a scheme
-  n_level = 3;
-
-  % allocate for later
-  Y = zeros(n_grab,n_level);
-  
-  % reconstructed mu
-  Mu_r = Mu;
-  
-  for k = 1:Ns
-    % start simulation
-    for n = n_start:N
-      % collect data into matrix
-      for l = 1:n_level
-        Y(:,l) = Mu(k,(n-n_grab-l):(n-1-l))';
-      end
-      % perform svd
-      [u,s,v] = svd(Y);
-      % we take the vector that is closest to being in the null
-      % space for mu, the error is the last singular value
-      err_roco = s(n_level,n_level);
-      a = v(:,n_level);
-      
-      Mu_r(k,n) = 0;
-      for l = 2:n_level
-        Mu_r(k,n) = Mu_r(k,n)-a(l)*Mu(k,n-l+1)/a(1);
-      end
-      
-    end
-  end
+  Nlr = 100;
   
   figure(1);
   hold on;
-  plot(Mu(1,:))
-  plot(n_start:N,Mu_r(1,n_start:N))
-  grid on
+  plot(Close(k,:))
   
-  %% see if this is a good prediction or not...
-  %% todo
+  slope = zeros(N,1);
+  
+  for n = (Nlr):N
+    A = [((n-Nlr+1):n)',ones(Nlr,1)];
+    b = Close(k,(n-Nlr+1):n)';
+    x_ = A\b;
+    
+    slope(n) = x_(1);
+    
+    x = ((n-Nlr+1):n)';
+    y = x_(1)*x+x_(2);
+    plot(x,y,'m')
+  end
+  grid on
+  title(sprintf('plot of close price and linear regressions, N=%d',Nlr))
+  
+  figure(2)
+  plot(Nlr:N,slope(Nlr:N));
+  grid on
+  title('plot of the slope of regression at point')
+  
+  figure(3)
+  N_ = (Nlr+2):N;
+  plot(N_,(1.5*slope(N_)-2*slope(N_-1)+0.5*slope(N_-2)))
+  grid on
+  title('plot of BDF FD of slope')
+  
+  % Close_r = Close;
+  % for n = (Nlr+1):N
+  %   % Close_r(k,n) = Close(k,n-1)+slope(n-1);
+  %   Close_r(k,n) = Close(k,n-1)+0.5*(3*slope(n-1)-slope(n-2));
+  % end
+  
+  % figure(3);
+  % hold on;
+  % plot(Close(k,:))
+  % plot((Nlr+1):N,Close_r(k,(Nlr+1):N))
+  
+  
 else
   error('invalid input for iTry')
 end

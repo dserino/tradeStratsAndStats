@@ -36,6 +36,16 @@ class positionLot:
 
         # location in original list
         self.index = index
+
+
+    def Print(self):
+        print "symbol:        "+self.symbol
+        print "n_shares:      "+str(self.n_shares)
+        print "current_value: "+str(self.current_value)
+        print "cost_basis:    "+str(self.cost_basis)
+        print "exit_low:      "+str(self.exit_low)
+        print "exit_high:     "+str(self.exit_high)
+        print "current_value: "+str(self.current_value)
     
 class unsettledFunds:
     """

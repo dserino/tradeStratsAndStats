@@ -27,13 +27,14 @@ from brokerageClasses import *
 #   -pp pProfit     --sell security when percentage gain is above pPlofit
 #   -ps pSell       --sell this percentage of position 
 #   -hp holdPeriod  --time for funds to settle
+#   -db debugMode   --user hits enter to advance
 #
 # -dl or -l is required
 
 ######
 # Todo:
-# - consider consistent stream of money coming into account
-#
+# - Consider consistent stream of money coming into account
+# - Make a simulator out of this. Ask user for inputs
 
 ######
 # Useful resources:
@@ -54,6 +55,16 @@ def main():
 
     # all data
     AllData = inputs[1]
+    # AllData[k_symbol][k_date][k_column]
+    # The columns are organized by
+    # [date of quote, open, high, low, close, volume, adj close]
+    n_date      = 0
+    n_open      = 1
+    n_high      = 2
+    n_low       = 3
+    n_close     = 4
+    n_volume    = 5
+    n_adj_close = 6
 
     # trade parameters
     B0          = inputs[2]
@@ -63,7 +74,9 @@ def main():
     pProfit     = inputs[6]
     pSell       = inputs[7]
     holdPeriod  = inputs[8]
-
+    debugMode   = inputs[9]
+    minBuyScore = -1.0
+    
     ######
     ### get statistics ###
     stats = CalculateNStdDev(AllData,10,Ns,4)
@@ -85,7 +98,7 @@ def main():
     # bank balance
     B = []
     # value of positions
-    VP = []
+    PV = []
     # funds to be settled
     SF = []
 
@@ -97,34 +110,283 @@ def main():
     # initial conditions
     B.append(B0)
     AV.append(B0)
-    VP.append(0.0)
+    PV.append(0.0)
     SF.append(0.0)
 
     ######
     ### perform simulation ###
-    # date index
-    n == 0
-    while True:
-        ### get date
+    checkDates(AllData,Symbols,Ns)
+    N = len(AllData[0])
+
+    # statistics to keep track of
+    total_positive_gain = [0.]
+    total_negative_gain = [0.]
+    total_invested = [[]]
+    total_profit = [[]]
+    for k in range(0,Ns):
+        total_invested[0].append(0.)
+        total_profit[0].append(0.)
         
+    current_year = AllData[0][0][n_date][0:4]
+        
+    print ">> starting simulation"
+    # date index
+    for n in range(0,N):
+        ### get date
+        year = AllData[0][n][n_date][0:4]
+        if year != current_year:
+            if n != 0:
+                print ">> happy new year!"
+            current_year = year
+            total_positive_gain.append(0.)
+            total_negative_gain.append(0.)
+            total_invested.append([])
+            total_profit.append([])
+            for k in range(0,Ns):
+                total_invested[-1].append(0.)
+                total_profit[-1].append(0.)
+
+        # print total_invested
+        # print total_profit
+        # print total_positive_gain
+        # print total_negative_gain
         
         ### update bank
+        B.append(B[n])
 
+        ### todays decisions
+        TodaysDecisions = []
+        
         ### determine scores for each symbol
+        # todo, check if indeces are right here, need to use past data
+        scores = GetScores(Kappa,n,minBuyScore,Nbuy,Ns)
+        s_K       = scores[0]
+        order     = scores[1]
+        Nbuy_true = scores[2]
+        kappa_    = scores[3]
+        # print kappa_
+        # print s_K
+        # print order
+        # print Nbuy_true
+        
 
         ### settled funds
         # release settled funds to bank
-        
+        s = 0
+        while s < len(UnsettledFunds):
+            # substract days from each fund
+            UnsettledFunds[s].days_left -= 1
+            
+            if UnsettledFunds[s].days_left == 0:
+                # remove and add to bank
+                B[n+1] += UnsettledFunds[s].amount
+                TodaysDecisions.append("$%6.2f settled" % UnsettledFunds[s].amount)
+                UnsettledFunds.pop(s)
+            else:
+                s += 1
+            
         ### determine to sell positions or not
+        p = 0
+        while p < len(Positions):
+            # for each position
 
+            # get index
+            k = Positions[p].index
+
+            # calculate value
+            # todo: figure out current value based on time checking
+            # usually I check in the middle/end of the day for buying
+            # and beginning of day for selling
+            Positions[p].current_value = AllData[k][n][n_open]
+            
+            # determine selling point
+            if Positions[p].current_value >= Positions[p].exit_high or \
+               Positions[p].current_value <= Positions[p].exit_low:
+                
+                # sell percentage of holdings
+                # todo, figure out how many shares to sell
+                if Positions[p].current_value >= Positions[p].exit_high:
+                    nShares = math.ceil(pSell*Positions[p].n_shares)
+                else:
+                    nShares = Positions[p].n_shares
+                    
+                # determine net gain from cost basis
+                # todo, keep track of capital gain for estimating tax
+                gain = (Positions[p].current_value \
+                        -Positions[p].cost_basis/(Positions[p].n_shares*1.0) ) \
+                    /(Positions[p].cost_basis/(Positions[p].n_shares*1.0))*100.0
+                net_gain = (Positions[p].current_value \
+                            -Positions[p].cost_basis/(Positions[p].n_shares*1.0))*nShares
+
+                # fill in for end statistics
+                if net_gain > 0:
+                    total_positive_gain[-1] += net_gain
+                else:
+                    total_negative_gain[-1] += net_gain
+                total_profit[-1][k] += net_gain
+                
+                # keep number of old shares
+                old_n_shares = Positions[p].n_shares
+                # update position lot to reflect shares sold
+                Positions[p].n_shares -= nShares
+                # total amount made from sell (not profit)
+                amount = nShares*Positions[p].current_value
+
+                # add message for today's decisions
+                TodaysDecisions.append(("sell %6d shares of %6s at $%6.2f (%5.2f%%), " \
+                                        % (nShares,Symbols[k], \
+                                           Positions[p].current_value,gain)) + \
+                                       ("net gain = $%6.2f" % (net_gain)))
+
+                # add to settled funds
+                UnsettledFunds.append(unsettledFunds(amount,holdPeriod))
+
+                if Positions[p].n_shares == 0:
+                    Positions.pop(p)
+                    continue
+                else:
+                    # set new exits for rest of shares
+                    # exit low is a break even
+                    Positions[p].exit_low = Positions[p].cost_basis \
+                                            /(Positions[p].n_shares*1.0)
+                    # exit high is 1+pProfit times greater than current value
+                    Positions[p].exit_high = Positions[p].current_value*(1+pProfit)
+
+                    # adjust cost basis
+                    Positions[p].cost_basis = Positions[p].cost_basis \
+                                              *Positions[p].n_shares/(old_n_shares*1.0)
+
+
+
+            # if Positions[p].n_shares == 0:
+            #     # remove position
+            #     Positions.pop(p)
+            # else:
+            p += 1
+                
         ### determine to buy or not
+        todaysFunds = buyingPower*B[n+1]
+        for nb in range(Nbuy_true):
+            # stock index
+            k = order[nb]
+
+            # go through each stock and buy
+            availableFunds = todaysFunds/(Nbuy_true*1.0)
+
+            # number of shares
+            # todo determine when to buy/what price
+            nShares = math.floor(availableFunds/AllData[k][n][n_close])
+            if nShares > 0:
+                buyPrice = AllData[k][n][n_close]
+                
+                cost = nShares*buyPrice
+
+                total_invested[-1][k] += cost
+                
+                # subtract from account
+                todaysFunds = todaysFunds-cost
+                B[n+1] = B[n+1]-cost
+
+                # add to positions
+                Positions.append(positionLot(cost,nShares,Symbols[k],pProfit,pLoss,k))
+                
+                # print decision
+                TodaysDecisions.append("buy  %6d shares of %6s at $%6.2f" % \
+                                       (nShares,Symbols[k],buyPrice))
 
         ### calculate value
+        Value = CalculateValue(B[n+1],Positions,UnsettledFunds)
+        AV.append(Value[0])
+        SF.append(Value[1])
+        PV.append(Value[2])
 
         ### print out days decisions
+        # date
+        print AllData[0][n][n_date]+":"
+        for k in range(0,len(TodaysDecisions)):
+            print "  "+TodaysDecisions[k]
+        # total value
+        print "  Positions Value: $%.2f" % PV[n+1]
+        print "  Unsettled Funds: $%.2f" % SF[n+1]
+        print "  Bank Value:      $%.2f" % B[n+1]
+        print "  Account Value:   $%.2f" % AV[n+1]
+        if debugMode:
+            if n == 0:
+                raw_input(">> hit [enter] to advance ")
+                print ""
+            else:
+                raw_input("")
+        
+    # plotting
+    # print some performance stats
+    # total positive gain
+    # total negative gain
+    # performance by symbol
+    # total invested
+    # total profit
+    #
+
+    print ""
+    print "###"
+    print "###"
+    print "###"
+    print "###"
+    print "###"
+    print "# Trade Strategy Performance:"
+    
+    current_year = eval(AllData[0][0][n_date][0:4])
+    for n_year in range(len(total_positive_gain)):
+        print "###"
+        print "# year: "+str(current_year)
+        
+        print "%7s  %14s  %12s %14s" % ("symbol","total invested", \
+                                     "total profit","percent profit")
+        for k in range(Ns):
+            if total_invested[n_year][k] == 0:
+                print "%7s  $%13.2f  $%11.2f " % \
+                    (Symbols[k],total_invested[n_year][k], \
+                     total_profit[n_year][k])
+            else:
+                print "%7s  $%13.2f  $%11.2f %13.2f%%" % \
+                    (Symbols[k],total_invested[n_year][k], \
+                     total_profit[n_year][k], \
+                     total_profit[n_year][k] \
+                     /total_invested[n_year][k]*100.0)
+
+
+        print ""
+        print "total positive gain: $%9.2f" % (total_positive_gain[n_year])
+        print "total negative gain: $%9.2f" % (total_negative_gain[n_year])
+        print "net gain:            $%9.2f" % (total_positive_gain[n_year]+ \
+                                                 total_negative_gain[n_year])
+        print "win/loss ratio:       %9.2f" % -(total_positive_gain[n_year]/ \
+                                                  total_negative_gain[n_year])
+
+        current_year += 1
+        print ""
+    
 
         
-        break
+
+
+def CalculateValue(B,Positions,UnsettledFunds):
+    """
+    calculate daily value of account given bank, position lots, and unsettled funds
+    """
+
+    ### settled funds
+    SF = 0
+    for k in range(0,len(UnsettledFunds)):
+        SF += UnsettledFunds[k].amount
+
+    ### positions values
+    PV = 0
+    for k in range(0,len(Positions)):
+        PV += Positions[k].current_value*Positions[k].n_shares
+
+    AV = PV+SF+B
+
+    return (AV,SF,PV)
 
 
 
@@ -290,6 +552,12 @@ def parseInputs():
 
         print ">> default values used for inputs:"
 
+    try:
+        i = sys.argv.index('-db')
+        db = True
+    except:
+        db = False
+        
     print ">>   bank        = "+str(b0)
     print ">>   Nbuy        = "+str(nb)
     print ">>   buyingPower = "+str(bp)
@@ -297,10 +565,11 @@ def parseInputs():
     print ">>   pProfit     = "+str(pp)
     print ">>   pSell       = "+str(ps)
     print ">>   holdPeriod  = "+str(hp)
-
+    print ">>   debugMode   = "+str(db)
+    
     ### return everything
     return (Symbols,AllData, \
-            b0,nb,bp,pl,pp,ps,hp)
+            b0,nb,bp,pl,pp,ps,hp,db)
 
 
 def usage():
@@ -327,6 +596,9 @@ def usage():
     print "  -dl or -l is required"
     
     sys.exit()
+
+
+
 
 
 if __name__ == "__main__":

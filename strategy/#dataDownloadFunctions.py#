@@ -35,7 +35,7 @@ def downloadHistoricalData(Symbols, \
         # start from second row and 
         # loop to length-1 because last row will be blank
         for n in range(1,len(data1)-1):
-            tmp = data1[n].split(',')
+o            tmp = data1[n].split(',')
             
             # now change appropriate numbers to 
             for col in range(1,len(tmp)):

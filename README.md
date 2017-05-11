@@ -17,7 +17,7 @@ Primary goals include (TODO)
 
 Eddie: I got this working now. There are a few "levels" of tables.
 
-1) At the first level, we have 500 Stock Price tables. Each of these tables represents a date and are named like SP20150323. Here's an example of what they look like:
+(1) At the first level, we have 500 Stock Price tables. Each of these tables represents a date and are named like SP20150323. Here's an example of what they look like:
 
     + ---------- + ---------- + ---------- + ---------- + ------- + --------- + ---------- + ----------------- +
     | SPO_Symbol | SPO_Date   | SPO_Open   | SPO_High   | SPO_Low | SPO_Close | SPO_Volume | SPO_AdjustedClose |
@@ -31,9 +31,9 @@ Eddie: I got this working now. There are a few "levels" of tables.
     
 Most of these tables have two dates for each symbol: the day of and the day before. I think this is meant to be able to calculate splits and dividends, but I honestly don't know. The psytock repo talks about this briefly. For now, I'm just grabbing the data that is listed as the same date as the table.
  
-2) The second level is a union of all of the data stored in the table Prices. This produces ~ 3 million records (~7,000 x 500).
+(2) The second level is a union of all of the data stored in the table Prices. This produces ~ 3 million records (~7,000 x 500).
 
-3) The third level is a crosstab of Adjusted Close Price stored in the table PricesCrosstab that looks something like this:
+(3) The third level is a crosstab of Adjusted Close Price stored in the table PricesCrosstab that looks something like this:
 
     + ---------- + ---------- + ---------- + ---------- + 
     | SPO_Symbol | SP20150323 | SP20150324 | SP20150325 | ....

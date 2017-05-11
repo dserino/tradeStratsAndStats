@@ -3,7 +3,7 @@
 This repo is for researching statistics and trading strategies for stock exchanges. 
 
 Primary goals include (TODO)
-1) Build historical database
+1) Build historical database -- Working --
 2) Develop tools to test trading strategies on historical data
 3) Research and Test trading strategies and collect data
 4) Perform data analysis to model optimal trading strategies for stocks
@@ -15,15 +15,53 @@ Primary goals include (TODO)
 
 *Build Historical Database*
 
-Eddie: I downloaded SQL Server onto my desktop computer. Turns out $75 doesn't buy you a whole lot of processing power, and my desktop is pretty darn slow. So I've setup a PostgreSQL database on my ubuntu laptop for now, and I'm looking to upload the stock data into the database in a meaningful and manageable way. Python has several PostgreSQL modules, so connecting to the database should be okay once we learn the modules. If they're anything like MySQLdb, then we're already set because that's a walk in the park.
+Eddie: I got this working now. There are a few "levels" of tables.
 
-Couple of things to keep in mind when building the database:
+1) At the first level, we have 500 Stock Price tables. Each of these tables represents a date and are named like SP20150323. Here's an example of what they look like:
 
-1) I want to assign a primary key to each symbol to allow indexing. Then we can access and combine the data very quickly, as needed in our simulations. In order to do this, I need a list of all symbols. I can create this from pystock's data, with a few caveats, the biggest of which is the fact that symbols are recycled, and companies can change their symbols. I have a few thoughts about how to track this, but I'll need to do more research.
+    + ---------- + ---------- + ---------- + ---------- + ------- + --------- + ---------- + ----------------- +
+    | SPO_Symbol | SPO_Date   | SPO_Open   | SPO_High   | SPO_Low | SPO_Close | SPO_Volume | SPO_AdjustedClose |
+    + ---------- + ---------- + ---------- + ---------- + ------- + --------- + ---------- + ----------------- +
+    | FCO        | 2015-03-23 | 9.25       | 9.42       | 9.25    | 9.42      | 38100      | 9.42              |
+    | FCO        | 2015-03-20 | 9.21       | 9.32       | 9.21    | 9.3       | 38400      | 9.3               |
+    | FAX        | 2015-03-23 | 5.42       | 5.49       | 5.42    | 5.46      | 837000     | 5.46              |
+    | FAX        | 2015-03-20 | 5.41       | 5.45       | 5.41    | 5.43      | 641800     | 5.43              |
+    | ....
+    + ---------- + ---------- + ---------- + ---------- + ------- + --------- + ---------- + ----------------- +
+    
+Most of these tables have two dates for each symbol: the day of and the day before. I think this is meant to be able to calculate splits and dividends, but I honestly don't know. The psytock repo talks about this briefly. For now, I'm just grabbing the data that is listed as the same date as the table.
+ 
+2) The second level is a union of all of the data stored in the table Prices. This produces ~ 3 million records (~7,000 x 500).
 
-2) Once I get symbol-key mapping, I need to load the pricing data in and match that data to the key. This should be relatively straightforward and only has to happen once per day.
+3) The third level is a crosstab of Adjusted Close Price stored in the table PricesCrosstab that looks something like this:
 
-3) After that is setup, we'll build some stored procedures for quickly grabbing the data we want via the python interface.
+    + ---------- + ---------- + ---------- + ---------- + 
+    | SPO_Symbol | SP20150323 | SP20150324 | SP20150325 | ....
+    + ---------- + ---------- + ---------- + ---------- + 
+    | A          | 42.2       | 41.09      | 40.81      |
+    | AA         | 13.0       | 13.09      | 12.97      |
+    | .....
+    + ---------- + ---------- + ---------- + ---------- + 
+    
+Each row is a different Symbol and each column is a different date.
+
+Right now, the server just sits on my computer. I'm not really sure how to make it so that remote users can also access it. One option that might work for now is to just have the main server on my system print updated tables to the repo, and then everyone can access them from there. I know this is crappy, but short of getting something online, I don't know what else we can do.
+
+
+
+
+Some imporovements that could be made:
+
+1) Use indexing to speed up the queries.
+
+2) Symbols are recycled, and this data model currently does not account for that. Companies can change their symbols. I have a few thoughts about how to track this, but I'll need to do more research.
+
+3) Include triggers that fire at the end of each day to print pystock data and update the database, including all the derived tables.
+
+4) Create a stored procedures to automate all maintainance and querying, such as quickly grabbing the data we want via the python interface or underlying algorithms.
+
+
+
 
 
 *Develop tools to test trading strategies on histroical data*

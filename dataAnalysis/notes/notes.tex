@@ -1,0 +1,95 @@
+\input{def}
+
+\begin{document}
+
+This document is intended for notes on the strategies we are developing.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Numerical Data Techniques}
+
+\subsection{DMD}
+
+\subsection{PCA}
+
+\subsection{Approximate Difference Scheme (ADS)}
+
+Consider a time series $f_j = f(t_j)$ for uniformly spaced
+grid, $t_j = j \Delta t + t_0,$ $j = 0, \dots, N_t.$ We wish to obtain
+$f_j$ for $j > N_t.$ We suppose that the time series approximately obeys
+the difference equation:
+\begin{align}
+a_0 f_j + a_1 f_{j-1} + ... + a_{M} f_{j-M} \approx 0, \quad j = M, \dots, N_t.
+\end{align}
+%
+Let $\textbf{f}_j = [f_j, f_{j-1}, \dots, f_{j-M}],$ then we want to find a vector 
+$\textbf{a}$ approximately orthogonal to $\textbf{f}_j$ for $j = M, \dots, N_t.$
+Combine into a matrix equation
+\begin{align}
+\textbf{F} \textbf{a} = 
+[\textbf{f}_M, \textbf{f}_{M+1}, \dots \textbf{f}_{N_t}] \textbf{a} \approx 0.
+\end{align}
+%
+Take the SVD of $\textbf{F},$
+\begin{align}
+\textbf{F} = \textbf{U} \boldsymbol{\Sigma} \textbf{V}^*.
+\end{align}
+% 
+Since
+\begin{align}
+\textbf{F} \textbf{v}_i = \sigma_i \textbf{u}_i,
+\end{align}
+%
+the vector that is most closely in the null space of $\textbf{F}$ is 
+the last column of $\textbf{V},$ which corresponds to the smallest singular value. 
+The smaller the singular value, the better the approximation is. In a scenario 
+like the stock market, we will know a piece of information for
+each day and may want to predict what will happen to the information during the next day.
+Let $\hat{f}$ be the predicted values. The prediction for the next day, $j = N_t+1,$ is
+given by
+\begin{align}
+\hat{f}_{j} = -\frac{1}{a_0}\sum_{i = 1}^{M} a_i f_{j-i}.
+\end{align}
+%
+See \lstinline{approximateDifferenceSchemeTest.m}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Stock Price Prediction Techniques}
+
+\subsection{Smooth-Extrapolate-Unsmooth (SEUS)}
+
+\begin{enumerate}
+\item Stock data is very noisy, first smooth the data so our algorithms will work better.
+For example use a trailing average
+\begin{align}
+\tilde{f}_{j}^M = \frac{1}{M} \sum_{i=0}^{M-1} f_{j-i},
+\end{align}
+where $\tilde{f}$ is the smoothed variable.
+%
+\item Use a predictive algorithm to extrapolate $\tilde{f}_{j+1}$ (ADS).
+%
+\item If possible, find $f_{j+1}$ given $\tilde{f}_{j+1}.$ One quantity of 
+interest is the predicted percent increase, given by
+\begin{align}
+\hat{p}_{j+1} = \frac{\hat{f}_{j+1}-f_j}{f_j}
+\end{align}
+%
+\end{enumerate}
+
+See \lstinline{analyzeStock.m}
+
+\section{Validation Metrics}
+
+\subsection{Win Loss Ratio}
+The win-loss ratio is calculated by
+\begin{align}
+w/l = \left(\sum_{j, \; p_j > 0} p_j\right)\bigg{/}\left(\sum_{j, \; p_j < 0} p_j\right).
+\end{align}
+%
+This is for the simplified scenario where the investor sells the day after a buy and buys
+the same principle amount each time. If the win loss ratio is 2, then 
+the investor looses a dollar on every 2 dollars of profit. The higher the win-loss ratio,
+the more confident the investor will be in the strategy. For stocks that are held for a long 
+time, a typical win-loss ratio may be around 1.5 due to high volatility. 
+
+
+\end{document}

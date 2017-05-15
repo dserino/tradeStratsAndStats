@@ -1,0 +1,13 @@
+In this directory: matlab files used to perform data analysis
+
+The main functions are
+ - analyzeStock.m
+ - analyzeMFs.m
+
+analyzeStock.m
+ - read in input file from /symbolFiles with list of symbols. Perform 
+   price prediction capabilities here
+
+analyzeMFs.m
+ - read in mutual fund symbols and analyze. Mutual funds are meant to be held for a long
+   period of time, therefore this analysis looks at long time performance.

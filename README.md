@@ -4,18 +4,17 @@ This repo is for researching statistics and trading strategies for stock exchang
 
 Primary goals include (TODO)
 1) Build historical database -- Working --
-2) Develop tools to test trading strategies on historical data
-3) Research and Test trading strategies and collect data
+2) Develop tools to test trading strategies on historical data -- Working --
+3) Research and Test trading strategies and collect data -- Researching --
 4) Perform data analysis to model optimal trading strategies for stocks
 5) Recconect pystock to Yahoo API
-6) 
 
 
 ## Detailed Status
 
-*Build Historical Database*
+**Build Historical Database**
 
-Eddie: I got this working now. There are a few "levels" of tables.
+*Eddie*: I got this working now. There are a few "levels" of tables.
 
 (1) At the first level, we have 500 Stock Price tables. Each of these tables represents a date and are named like SP20150323. Here's an example of what they look like:
 
@@ -33,7 +32,7 @@ Most of these tables have two dates for each symbol: the day of and the day befo
  
 (2) The second level is a union of all of the data stored in the table Prices. This produces ~ 3 million records (~7,000 x 500).
 
-(3) The third level is a crosstab of Adjusted Close Price stored in the table PricesCrosstab that looks something like this:
+(3) The third level is a crosstab that looks something like this:
 
     + ---------- + ---------- + ---------- + ---------- + 
     | SPO_Symbol | SP20150323 | SP20150324 | SP20150325 | ....
@@ -43,7 +42,7 @@ Most of these tables have two dates for each symbol: the day of and the day befo
     | .....
     + ---------- + ---------- + ---------- + ---------- + 
     
-Each row is a different Symbol and each column is a different date.
+Each row is a different Symbol and each column is a different date. I have generated crosstabs for all dates up to 03/31/17 for our different fields (i.e. one for Volume, one for AdjustedClose, etc.). These take a long time to generate, so ideally we would switch to using (4) below.
 
 Right now, the server just sits on my computer. I'm not really sure how to make it so that remote users can also access it. One option that might work for now is to just have the main server on my system print updated tables to the repo, and then everyone can access them from there. I know this is crappy, but short of getting something online, I don't know what else we can do.
 
@@ -54,7 +53,7 @@ Some imporovements that could be made:
 
 1) Use indexing to speed up the queries.
 
-2) Symbols are recycled, and this data model currently does not account for that. Companies can change their symbols. I have a few thoughts about how to track this, but I'll need to do more research.
+2) Symbols are recycled, and this data model currently does not account for that. Companies can change their symbols. I have a few thoughts about how to track this, but we'll need to do more research.
 
 3) Include triggers that fire at the end of each day to print pystock data and update the database, including all the derived tables.
 
@@ -64,9 +63,9 @@ Some imporovements that could be made:
 
 
 
-*Develop tools to test trading strategies on histroical data*
+**Develop tools to test trading strategies on histroical data**
 
-Dan: I've been working on porting my old strategy simulator matlab code to python. Right now the organization is
+*Dan*: I've been working on porting my old strategy simulator matlab code to python. Right now the organization is
 testTradeStrategy.py runs the strategy simulator on historical data. 
 dataDownloadFunctions.py contains useful functions for using yahoo's API. For a given symbol and range of dates, historical data (open, close, high, low, volume, etc.) can be obtained.
 statisticsFunctions.py will have functions that calculate technical indicators and our custom indicators used by the simulation.
@@ -89,9 +88,12 @@ What's left to do includes:
      - Print out days decisions
 2) Integrate code with SQL to grab historical data from our databases. For optimizing a good trade strategy, we may not want to download data very frequently, therefore SQL can cut down on time and lessen the stress on yahoo servers. Once we know what symbols we want, we will want to download current data in our codes. The end goal is to write a (separate) code which reccommends real time trading decisions.
 
-*Research and Test trading strategies and collect data*
 
--- No update --
+*Eddie*: Same as point (4) in **Build Historical Database**. I will work on writing a stored procedure that takes date and symbol input from python and generates crosstabs of the data.
+
+**Research and Test trading strategies and collect data**
+
+*Eddie*: Exploring some time-series methods on a few of the symbols.
 
 
 *Perform data analysis to model optimal trading strategy for stocks*

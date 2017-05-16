@@ -11,7 +11,7 @@ Primary goals include (TODO)
 6) 
 
 
-**Detailed Status**
+## Detailed Status
 
 *Build Historical Database*
 

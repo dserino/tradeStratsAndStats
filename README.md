@@ -44,7 +44,7 @@ Most of these tables have two dates for each symbol: the day of and the day befo
     
 Each row is a different Symbol and each column is a different date. I have generated crosstabs for all dates up to 03/31/17 for our different fields (i.e. one for Volume, one for AdjustedClose, etc.). These take a long time to generate, so ideally we would switch to using (4) below.
 
-Right now, the server just sits on my computer. I'm not really sure how to make it so that remote users can also access it. One option that might work for now is to just have the main server on my system print updated tables to the repo, and then everyone can access them from there. I know this is crappy, but short of getting something online, I don't know what else we can do.
+Right now, the server just sits on my computer. I'm not really sure how to make it so that remote users can also access it. One option that might work for now is to just have the main server on my system print updated tables to the repo, and then everyone can access them from there. I know this is crappy, but short of getting something online, I don't know what else we can do. Until we get that figured out, I'm going to refrain from posting the sql scripts becuase (1) they still contain my personal information (like my database password), and (2) it's pointless for anyone who doesn't have a database on their system, and I don't think it's a good idea to replicate the database.
 
 
 

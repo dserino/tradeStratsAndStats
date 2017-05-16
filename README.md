@@ -88,6 +88,7 @@ What's left to do includes:
      - Print out days decisions
 2) Integrate code with SQL to grab historical data from our databases. For optimizing a good trade strategy, we may not want to download data very frequently, therefore SQL can cut down on time and lessen the stress on yahoo servers. Once we know what symbols we want, we will want to download current data in our codes. The end goal is to write a (separate) code which reccommends real time trading decisions.
 
+<br /><br />
 
 *Eddie*: Same as point (4) in **Build Historical Database**. I will work on writing a stored procedure that takes date and symbol input from python and generates crosstabs of the data.
 
@@ -96,11 +97,11 @@ What's left to do includes:
 *Eddie*: Exploring some time-series methods on a few of the symbols.
 
 
-*Perform data analysis to model optimal trading strategy for stocks*
+**Perform data analysis to model optimal trading strategy for stocks**
 
 -- No update --
 
 
-*Reconnect pystock to Yahoo API*
+**Reconnect pystock to Yahoo API**
 
 -- No update --

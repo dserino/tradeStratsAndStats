@@ -63,8 +63,8 @@ def main():
     n_high      = 2
     n_low       = 3
     n_close     = 4
-    n_volume    = 5
-    n_adj_close = 6
+    n_volume    = 6
+    n_adj_close = 5
 
     # trade parameters
     B0          = inputs[2]
@@ -501,6 +501,10 @@ def parseInputs():
                                              y0,m0,d0, \
                                              y1,m1,d1)
         except:
+            AllData = downloadHistoricalData(Symbols, \
+                                             y0,m0,d0, \
+                                             y1,m1,d1)
+
             print ">> unable to download data"
             sys.exit()
             

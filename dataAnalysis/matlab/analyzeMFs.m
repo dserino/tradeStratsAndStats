@@ -4,11 +4,11 @@ close all;
 dir = '~/tradeStratsAndStats/dataAnalysis/matlab/';
 
 %% filename and save data for symbols
-filename = 'symbolFiles/MFFixedIncome.txt';
-SaveFile = 'saveFiles/MFFixedIncome.mat';
+% filename = 'symbolFiles/MFFixedIncome.txt';
+% SaveFile = 'saveFiles/MFFixedIncome.mat';
 
-% filename = 'symbolFiles/MFLargeBlend.txt';
-% SaveFile = 'saveFiles/MFLargeBlend.mat';
+filename = 'symbolFiles/MFLargeBlend.txt';
+SaveFile = 'saveFiles/MFLargeBlend.mat';
 
 % filename = 'symbolFiles/MFLargeGrowth.txt';
 % SaveFile = 'saveFiles/MFLargeGrowth.mat';
@@ -131,7 +131,7 @@ for k = 1:Ns
 end
 
 [~,I] = sort(wol200);
-[~,I] = sort(ar200);
+% [~,I] = sort(ar200);
 % [~,I] = sort(std1);
 fprintf('%8s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s\n', ...
         'symbol','wol1','wol10','wol20','wol200', ...
@@ -147,5 +147,8 @@ for k_ = 1:Ns
           
 end
 
+
+% figure(1)
+% plot3(1./std1,ar200,1:Ns,'*')
 
 end

@@ -3,6 +3,15 @@ close all;
 % need to change this
 dir = '~/tradeStratsAndStats/dataAnalysis/matlab/';
 
+% iTry will determine what analysis we want to run.
+% this will keep things organized and reduce the need to copy above
+% code for each file
+% iTry = 1; % plot multiple things 
+% iTry = 2; % seus using n-day moving average
+% iTry = 3; % seus using linear regression
+% iTry = 4; % regression on whole data
+iTry = 5; % regression and simulation
+
 %% filename for symbols
 filename = 'symbolFiles/testSymbols.txt';
 
@@ -19,7 +28,7 @@ day0 = 1;
 
 % end date
 year1 = 2017;
-month1 = 4;
+month1 = 6;
 day1 = 21;
 
 %% read in all symbols
@@ -49,31 +58,13 @@ n_volume    = 6;
 n_adj_close = 7;
 
 %% perform analysis
-% we want to make a profit by buying at a close and selling at next open
-
-% ideas:
-%  - dynamic mode decomp on smoothed data. We may not have luck
-%    with noisy data. If smoothed data is better to work with, we
-%    need to go from smoothed data to noisy data afterwords (work
-%    with probabilities).
-%  - for a given stock look at all days with open(n+1)>close(n) and
-%    see if there is common pattern (relation with technical indicators)
-%
-
-% iTry will determine what analysis we want to run.
-% this will keep things organized and reduce the need to copy above
-% code for each file
-% iTry = 1; % plot multiple things 
-iTry = 2; % seus using n-day moving average
-% iTry = 3; % seus using linear regression
-
 % make sure that dates agree for each symbol
 CheckDates(data,symbols);
 
 % get prices into high, low, close, and open data
 [High,Low,Close,Open] = GetPrices(data,N,Ns);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if iTry == 1
   % plot multiple things 
   
@@ -141,7 +132,7 @@ if iTry == 1
     fprintf('%7s %6.2f %6.2f%% %6.2f%% \n',symbols{k},WinLossRatio(k),Mu_p_i(k),Sigma_p_i(k));
   end
   
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 elseif iTry == 2
   %% smooth, extrapolate, un-smooth
   % use Nlr-day moving average
@@ -252,9 +243,9 @@ elseif iTry == 2
   grid on
   
   %% test performance
-  percent_inc_r = (Close_r((Nlr+1):N)-Close(Nlr:(N-1)))./Close(Nlr:(N-1));
-  percent_inc   = (Close((Nlr+1):N)  -Close(Nlr:(N-1)))./Close(Nlr:(N-1));
-  
+  percent_inc_r = (Close_r((Nlr+1):N)-Close(k,Nlr:(N-1)))./Close(k,Nlr:(N-1))
+  percent_inc   = (Close(k,(Nlr+1):N)  -Close(k,Nlr:(N-1)))./Close(k,Nlr:(N-1));
+  % todo, play around with high here
   n_ww = sum((percent_inc_r>0).*(percent_inc>0));
   n_ll = sum((percent_inc_r<0).*(percent_inc<0));
   n_wl = sum((percent_inc_r>0).*(percent_inc<0));
@@ -299,7 +290,7 @@ elseif iTry == 2
   
   % todo, add more metrics
   
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 elseif iTry == 3
   % todo, trying to recreate iTry = 2 using least squares as a
   % smoother instead 
@@ -439,6 +430,247 @@ elseif iTry == 3
   grid on
   
   %% test performance
+  
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+elseif iTry == 4
+  %% use regression to determine p_inc
+  % We guess that p_inc is correlated with the time history of
+  % technical indicators. Look at data and come up with a least
+  % squares fit for p_inc
+  
+  % pick stock index 1
+  k = 1;
+
+  %% smooth step
+  % average this many points to determine moving average and std dev
+  Nlr = 50;
+
+  % number of samples for linear regression
+  Nt = N-Nlr-1; % use all data available
+  % Nt = 200;
+  
+  % number of days to use in regression for tech indicators
+  n_level = 4;
+  
+  fprintf('> smoothing data using %d day moving average \n',Nlr);
+
+  % plot closing price
+  figure(1);
+  hold on;
+  plot(Close(k,Nlr:N))
+  
+  % calculate moving average
+  Mu = Close(k,:);
+  Sigma = Close(k,:);
+  Kappa = Close(k,:);
+  p_increase = [0,(Open(k,2:end)-Close(k,1:(end-1)))./(Close(k,1:(end-1)))];
+  
+  I = 1:Nlr;
+  for n = (Nlr):N
+    Mu(n)    = sum(Open(k,I+n-Nlr))/Nlr;
+    Sigma(n) = sqrt(sum((Open(k,I+n-Nlr)-Mu(n)).^2)/(Nlr));
+    Kappa(n) = (Close(k,n)-Mu(n))/Sigma(n);
+  end
+
+  % plot moving average
+  plot(Mu(Nlr:N),'m')
+  grid on
+  xlabel('Time (days)')
+  title(sprintf('stock closing price and %d day moving average',Nlr))
+  grid on
+  
+  % plot number of std deviations ahead of mean
+  figure(2)
+  plot(Kappa(Nlr:N))
+  xlabel('Time (days)')
+  title('Number of standard deviations ahead of mean')
+  ylabel('\kappa')
+  grid on
+  
+  %% regression
+  % compute data matrix
+  n = Nlr+Nt+1;
+  X = zeros((Nt+1)+(1-n_level),n_level);
+  i = n-Nt-1;
+  for j = 1:n_level
+    X(:,j) = Kappa((n_level-j+i):((Nt+1)-j+i));
+    % X(:,j) = (Kappa((n_level-j+i):((Nt+1)-j+i)) ...
+    %          -Kappa((n_level-j+i-1):((Nt+1)-j+i-1)))./ ...
+    %          Kappa((n_level-j+i-1):((Nt+1)-j+i-1));
+  end
+  X = [X.^3,X.^2,X,ones(Nt+2-n_level,1)];
+  b = p_increase((n_level+i):((Nt+1)+i))';
+
+  a = X\b;
+  
+  figure(3)
+  hold on
+  plot(X*a,b,'*')
+  ylabel('predicted p_{inc}')
+  xlabel('p_{inc}')
+  title(sprintf('Nlr = %d, Nt = %d, n_{level} = %d',Nlr,Nt,n_level));
+  grid on
+  
+  %% estimate r^2
+  b_bar = sum(b)/length(b);
+  SS_tot = sum((b-b_bar).^2)/length(b);
+  SS_res = sum((X*a-b).^2)/length(b);
+  r_sqr = 1-SS_res/SS_tot;
+  fprintf('r_sqr = %6.4f\n',r_sqr);
+  fprintf('n/N   = %6.4f\n',n_level/Nt);
+
+  b0 = min(X*a);
+  b1 = max(X*a);
+
+  % plot fit and one std deviation away from fit
+  plot([b0,b1],[b0,b1],'m')
+  plot([b0,b1],[b0,b1]+sqrt(SS_tot),'--m');
+  plot([b0,b1],[b0,b1]-sqrt(SS_tot),'--m');
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+elseif iTry == 5
+  % use least squares in a moving simulation to determine predicted p_inc
+  
+  % pick stock index 1
+  k = 1;
+
+  %% smooth step
+  % average
+  Nlr = 50;
+  % number of samples
+  Nt = 200;
+  % stencil size
+  n_level = 4;
+  
+  % buy security if predicted p_inc is higher than p_buy
+  p_buy = .005;
+  % don't buy if predicted is higher than p_end
+  p_end = 1;
+  
+  fprintf('> smoothing data using %d day moving average \n',Nlr);
+
+  % plot closing price
+  figure(1);
+  hold on;
+  plot(Close(k,Nlr:N))
+  
+  % calculate moving average
+  Mu = Close(k,:);
+  Sigma = Close(k,:);
+  Kappa = Close(k,:);
+  p_increase = [0,(Open(k,2:end)-Close(k,1:(end-1)))./(Close(k,1:(end-1)))];
+  
+  I = 1:Nlr;
+  for n = (Nlr):N
+    Mu(n)    = sum(Open(k,I+n-Nlr))/Nlr;
+    Sigma(n) = sqrt(sum((Open(k,I+n-Nlr)-Mu(n)).^2)/(Nlr));
+    Kappa(n) = (Close(k,n)-Mu(n))/Sigma(n);
+  end
+
+  plot(Mu(Nlr:N),'m')
+  grid on
+  title('Close price and mean')
+  xlabel('Time (days)')
+  title(sprintf('stock closing price and %d day moving average',Nlr))
+
+  figure(2)
+  plot(Kappa(Nlr:N))
+  xlabel('Time (days)')
+  title('Number of standard deviations ahead of mean')
+  ylabel('\kappa')
+  grid on
+
+  %% run simple simulation to calculate strategy performance
+  % 
+  win = 0;
+  loss = 0;
+  
+  % number of opportunities 
+  n_opps = 0;
+  % number of trading days
+  n_trade = (N-Nlr-Nt);
+  % number of possible wins
+  n_win = sum(p_increase((Nlr+Nt+1):(N))>0);
+  
+  for n = (Nlr+Nt+1):N
+
+    % compute data matrix
+    % start from
+    % Nlr+i to n-1
+    X = zeros((Nt+1)+(1-n_level),n_level);
+    i = n-Nt-1;
+    for j = 1:n_level
+      X(:,j) = Kappa((n_level-j+i):((Nt+1)-j+i));
+      % X(:,j) = p_increase((n_level-j+i):((Nt+1)-j+i));
+      % X(:,j) = (Kappa((n_level-j+i):((Nt+1)-j+i)) ...
+      %           -Kappa((n_level-j+i-1):((Nt+1)-j+i-1)))./ ...
+      %          Kappa((n_level-j+i-1):((Nt+1)-j+i-1));
+    end
+    X = [X.^3,X.^2,X,ones(Nt+2-n_level,1)];
+    b = p_increase((n_level+i):((Nt+1)+i))';
+  
+    % solve for fit
+    a = X(1:(end-1),:)\b(1:(end-1));
+    
+    % predict p_inc
+    p_pred = X(end,:)*a;
+    
+    % compute fit parameters
+    b_bar = sum(b)/length(b);
+    SS_tot = sum((b-b_bar).^2)/length(b);
+    SS_res = sum((X*a-b).^2)/length(b);
+    r_sqr = 1-SS_res/SS_tot;
+  
+    % if r_sqr < 8
+      
+    %   b0 = min(X*a);
+    %   b1 = max(X*a);
+
+    %   % plot fit and one std deviation away from fit
+    %   figure(3)
+    %   hold on
+    %   plot(X*a,b,'*')
+    %   plot([b0,b1],[b0,b1],'m')
+    %   plot([b0,b1],[b0,b1]+sqrt(SS_tot),'--m');
+    %   plot([b0,b1],[b0,b1]-sqrt(SS_tot),'--m');
+
+    %   pause
+    % end
+    
+    % if conditions are right, buy security
+    if p_pred > p_buy && p_pred < p_end 
+      
+      fprintf('p_pred: %6.2f%%, p_true: %6.2f%%, r_sqr: %6.2f\n', ...
+              p_pred*100,p_increase(n)*100,r_sqr);
+      if p_increase(n) > 0
+        win = win + p_increase(n);
+      else
+        loss = loss + p_increase(n);
+      end
+      n_opps = n_opps+1;
+    end
+    
+    
+    % uncomment if sample size should change with day
+    % Nt = Nt+1;
+  end
+  
+  % calculate performance
+  % wol assuming you buy and sell everyday (should be bad)
+  wol_0 = -sum(p_increase.*(p_increase>0))/ ...
+          sum(p_increase.*(p_increase<0));
+  fprintf('blind wol = %6.2f \n',wol_0)
+
+  % wol using regression above
+  wol=-win/loss;
+  fprintf('wol       = %6.2f \n',wol)
+
+  % number of opportunities
+  fprintf('n_opps  = %d \n',n_opps);
+  fprintf('n_win   = %d \n',n_win);
+  fprintf('n_trade = %d \n',n_trade);
+  
   
 else
   error('invalid input for iTry')

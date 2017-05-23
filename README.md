@@ -65,20 +65,17 @@ Some imporovements that could be made:
 
 **Develop tools to test trading strategies on histroical data**
 
-*Dan*: I've been working on porting my old strategy simulator matlab code to python. Right now the organization is
+*Dan*: 
 testTradeStrategy.py runs the strategy simulator on historical data. 
 dataDownloadFunctions.py contains useful functions for using yahoo's API. For a given symbol and range of dates, historical data (open, close, high, low, volume, etc.) can be obtained.
-statisticsFunctions.py will have functions that calculate technical indicators and our custom indicators used by the simulation.
+statisticsFunctions.py has functions that calculate technical indicators and our custom indicators used by the simulation.
 brokerageClasses.py contains classes for position lots (number of shares bought at the same time/price) and unsettled funds (funds that take ~3 days to be released to you after a sell).
-Currently implemented is
 
+The organization for the simulator is as follows:
 1) Parsing inputs: parameters for the simulation and a file of symbols is read. For a given strategy, I think it is better to have a small finite list of (O(10) - O(100)) symbols which we are trading that strategy with.
 2) Downloading data from yahoo: For given symbols, data is downloaded. Code gives an option to save data to avoid downloading data twice.
-3) Initializing simulation
-
-What's left to do includes:
-
-1) Finish porting previous code. The simulation runs for each trading day and has the structure. The key difference between different strategies lies in the sell and buy functions. I will implement my version first to get a working code, but my vision for our work is to figure out the best analyses to run and come up with 'good' buy and sell functions.
+3) Initializing simulation 
+4) Enter a loop over each trading day. The key difference between different strategies lies in the sell and buy functions. Currently implemented simple buy/sell functions, my vision for our work is to figure out the best analyses to run and come up with 'good' buy and sell functions.
      - Get date
      - If funds settle, release to bank
      - Run analysis to feed into buy/sell decisions
@@ -86,7 +83,11 @@ What's left to do includes:
      - Determine to buy any stocks
      - Calculate account value
      - Print out days decisions
-2) Integrate code with SQL to grab historical data from our databases. For optimizing a good trade strategy, we may not want to download data very frequently, therefore SQL can cut down on time and lessen the stress on yahoo servers. Once we know what symbols we want, we will want to download current data in our codes. The end goal is to write a (separate) code which reccommends real time trading decisions.
+5) Use trading data to evaluate performance. win/loss ratios, performance for each symbol, etc.
+
+<br /><br />
+
+Possible todo: Integrate code with SQL to grab historical data from our databases. For optimizing a good trade strategy, we may not want to download data very frequently, therefore SQL can cut down on time and lessen the stress on yahoo servers. Once we know what symbols we want, we will want to download current data in our codes. The end goal is to write a (separate) code which reccommends real time trading decisions.
 
 <br /><br />
 
@@ -96,6 +97,12 @@ What's left to do includes:
 
 *Eddie*: Exploring some time-series methods on a few of the symbols.
 
+*Dan*: Researched two methods for predicting daily stock prices.
+
+1) The first idea is to smooth the data, extrapolate in time, then unsmooth the extrapolated values. The first two steps seem to work very well while the third step doesn't. The first two steps may be interesting for long terms stategies.
+2) The second idea is to perform a regression on the daily percent increase given historical values for the technical indicators. This is justified because we are looking at similar conditions in the past that could help us predict the future. This may be more promising than (1).
+
+Todo: research DMD and RCA methods
 
 **Perform data analysis to model optimal trading strategy for stocks**
 
@@ -105,3 +112,7 @@ What's left to do includes:
 **Reconnect pystock to Yahoo API**
 
 -- No update --
+
+**Mutual fund performance analysis**
+
+*Dan*: in /dataAnalysis/matlab/, the code analyzeMFs.m analyzes performance data for mutual funds in differet market sectors. This code can easily be extended to long term ETFs by changing the input symbols.

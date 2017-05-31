@@ -7,8 +7,11 @@ dir = '~/tradeStratsAndStats/dataAnalysis/matlab/';
 % filename = 'symbolFiles/MFFixedIncome.txt';
 % SaveFile = 'saveFiles/MFFixedIncome.mat';
 
-filename = 'symbolFiles/MFLargeBlend.txt';
-SaveFile = 'saveFiles/MFLargeBlend.mat';
+filename = 'symbolFiles/MFInternational.txt';
+SaveFile = 'saveFiles/MFInternational.mat';
+
+% filename = 'symbolFiles/MFLargeBlend.txt';
+% SaveFile = 'saveFiles/MFLargeBlend.mat';
 
 % filename = 'symbolFiles/MFLargeGrowth.txt';
 % SaveFile = 'saveFiles/MFLargeGrowth.mat';
@@ -130,9 +133,9 @@ for k = 1:Ns
   
 end
 
-[~,I] = sort(wol200);
+% [~,I] = sort(wol200);
 % [~,I] = sort(ar200);
-% [~,I] = sort(std1);
+[~,I] = sort(std1);
 fprintf('%8s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s %6s\n', ...
         'symbol','wol1','wol10','wol20','wol200', ...
         'ar1','ar10','ar20','ar200', ...

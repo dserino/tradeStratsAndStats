@@ -77,7 +77,7 @@ function ReadInYahooFinanceData(dir,filename,SaveFile, ...
         l = l-1;
       end
     end
-    fprintf('> loaded [%d/%d] \n',k,Ns);
+    fprintf('> loaded %s [%d/%d] \n',symbols{k},k,Ns);
   end
   
   N = length(data{1}(:,1));

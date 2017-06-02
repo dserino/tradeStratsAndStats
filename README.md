@@ -95,7 +95,9 @@ Possible todo: Integrate code with SQL to grab historical data from our database
 
 **Research and Test trading strategies and collect data**
 
-*Eddie*: Exploring some time-series methods on a few of the symbols.
+*Eddie*: Explored some time-series methods on a few of the symbols. I've put this on pause for now.
+
+I've been diving into learning trading strategies, reading books about trading, and watching videos from professional traders. In addition, I'm researching some good charting software and found a commission free trader.
 
 *Dan*: Researched two methods for predicting daily stock prices.
 

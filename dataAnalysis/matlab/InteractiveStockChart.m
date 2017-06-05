@@ -43,6 +43,19 @@ else
 end
 % End initialization code - DO NOT EDIT
 
+% TODO:
+%  - symbol update from picker
+%  - scroll bar
+%  - candle sticks for multiple days
+%  - add in dates
+%  - tech indicators
+%    - moving average
+%    - stochastics
+%    - macd
+%    - etc.
+%  - draw lines (like snapchat draw)
+
+
 % --- Executes just before InteractiveStockChart is made visible.
 function InteractiveStockChart_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
@@ -81,32 +94,7 @@ time_period = {'1D','2D','5D','20D'};
 set(handles.popupmenu_period,'String',time_period);
 
 %% plot
-axes(handles.axes1);
-k = 1;
-N = length(close(k,:));
-
-CandlestickPlot(1:N,close(k,:),open(k,:),high(k,:),low(k,:),1,0.25,1.0);
-% grid off
-
-% find axis x limits
-xlim([0,N]);
-
-% find axis y limits
-y0 = min(low(k,:));
-y1 = max(high(k,:));
-ylim([y0,y1]);
-
-axes(handles.axes2);
-k = 1;
-N = length(close(k,:));
-
-bar(1:N,volume(k,:));
-
-% find axis x limits
-xlim([0,N]);
-grid on
-
-set(gca,'YAxisLocation','right');
+update_plots(handles);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -264,6 +252,28 @@ function zoom_in_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% get current color and if button is clicked
+  color = get(handles.popupmenu_symbols,'BackgroundColor');
+  
+  isClicked = get(handles.zoom_out,'UserData');
+
+  if isClicked
+    % if already clicked unclick
+    set(handles.zoom_in,'UserData',0);
+
+    color_new = get(handles.popupmenu_symbols,'BackgroundColor');
+    set(handles.zoom_in,'BackgroundColor',color_new);
+    
+    return
+  else
+    % not clicked yet
+    set(handles.zoom_in,'UserData',1);
+    isClicked = 1;
+
+    color_new = color/1.5;
+    set(handles.zoom_in,'BackgroundColor',color_new);
+  end
+  
   data = get(handles.axes1,'UserData');
   symbols = data{1};
   dates = data{2};
@@ -275,36 +285,72 @@ function zoom_in_Callback(hObject, eventdata, handles)
 
   k = 1;
   
-  axes(handles.axes1)
-  [x1,~,~] = ginput(1);
-  
-  % draw ref line
-  
-  [x2,~,~] = ginput(1);
-  
-  % draw ref line
-  
-  
-  
-  % find axis x limits
-  n1 = floor(x1);
-  n2 = ceil(x2);
-  
-  xlim([n1,n2]);
-  
-  % find axis y limits
-  y0 = min(low(k,n1:n2));
-  y1 = max(high(k,n1:n2));
-  ylim([y0,y1]);
-  
-  axes(handles.axes2);
-  xlim([n1,n2]);
+  while true
+    
+    isClicked = get(handles.zoom_in,'UserData');
+    if ~isClicked
+      return
+    end
+    
+    axes(handles.axes1)
+    hold on
+    y_ = ylim;
+    
+    [x1,y,~] = ginput(1);
+    
+    % check to see if user unclicked
+    if y > y_(2)
+      color_new = get(handles.popupmenu_symbols,'BackgroundColor');
+      set(handles.zoom_in,'BackgroundColor',color_new);
+      set(handles.zoom_in,'UserData',0);
+      return
+    end
+    
+    % draw ref line
+    plot([x1,x1],[y_(1),y_(2)],'b');
+    
+    [x2,y,~] = ginput(1);
 
-  y0 = min(volume(k,n1:n2));
-  y1 = max(volume(k,n1:n2));
+    % check to see if user unclicked
+    if y > y_(2)
+      color_new = get(handles.popupmenu_symbols,'BackgroundColor');
+      set(handles.zoom_in,'BackgroundColor',color_new);
+      set(handles.zoom_in,'UserData',0);
+      % need to undo last plot
+      x_ = xlim;
+      cla;
+      update_plots(handles,x_(1),x_(2));
+      return
+    end
 
-  ylim([y0,y1]);
+    % draw ref line
+    plot([x2,x2],[y_(1),y_(2)],'b');
 
+    cla;
+    update_plots(handles);
+    
+    axes(handles.axes1)
+    % find axis x limits
+    n1 = floor(x1);
+    n2 = ceil(x2);
+    
+    xlim([n1,n2]);
+    
+    % find axis y limits
+    y0 = min(low(k,n1:n2));
+    y1 = max(high(k,n1:n2));
+    ylim([y0,y1]);
+    
+    axes(handles.axes2);
+    xlim([n1,n2]);
+
+    y0 = min(volume(k,n1:n2));
+    y1 = max(volume(k,n1:n2));
+
+    ylim([y0,y1]);
+
+  end
+    
 % --- Executes on button press in zoom_out.
 function zoom_out_Callback(hObject, eventdata, handles)
 % hObject    handle to zoom_out (see GCBO)
@@ -359,7 +405,7 @@ function zoom_out_Callback(hObject, eventdata, handles)
     if y > y0(2)
       color_new = get(handles.popupmenu_symbols,'BackgroundColor');
       set(handles.zoom_out,'BackgroundColor',color_new);
-      % set(handles.zoom_out,'UserData',0);
+      set(handles.zoom_out,'UserData',0);
       return
     end
 
@@ -396,3 +442,53 @@ function zoom_out_Callback(hObject, eventdata, handles)
 
 
   end
+
+  
+  
+  
+  
+%% general functions
+function update_plots(handles,n1,n2)
+
+  data = get(handles.axes1,'UserData');
+  symbols = data{1};
+  dates = data{2};
+  close = data{3};
+  open = data{4};
+  high = data{5};
+  low = data{6};
+  volume = data{7};
+
+  %% plot
+  axes(handles.axes1);
+  k = 1; % todo
+  N = length(close(k,:));
+
+  % find axis x limits
+  if ~exist('n1','var')
+    n1 = 1;
+    n2 = N;
+  end
+  
+  CandlestickPlot(n1:n2,close(k,n1:n2),open(k,n1:n2),high(k,n1:n2),low(k,n1:n2),1,0.35,1.0);
+
+  xlim([n1,n2]);
+    
+  % find axis y limits
+  y0 = min(low(k,n1:n2));
+  y1 = max(high(k,n1:n2));
+  ylim([y0,y1]);
+
+  axes(handles.axes2);
+  k = 1;
+  N = length(close(k,:));
+
+  bar((1:N)+0.5,volume(k,:));
+
+  % find axis x limits
+  xlim([n1,n2]);
+  grid on
+
+  set(gca,'YAxisLocation','right');
+
+  

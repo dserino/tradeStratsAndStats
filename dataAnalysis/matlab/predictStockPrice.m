@@ -8,7 +8,7 @@ Ntr =  10; % number of look back points for regression
 Nr  = 400; % length of regression data matrix
 
 predictMu = false;
-predictXi = true;
+predictXi = false;
 
 % need to change this
 dir = '~/tradeStratsAndStats/dataAnalysis/matlab/';
@@ -63,6 +63,7 @@ CheckDates(data,symbols);
 
 % get prices into high, low, close, and open data
 [High,Low,Close,Open] = GetPrices(data,N,Ns);
+[Volume] = GetVolume(data,N,Ns);
 
 %% perform analysis
 % just look at first index
@@ -253,12 +254,14 @@ end
 
 %% plot
 % todo, input figure number
+figure(1);
 CandlestickPlot(1:N,C_r(k,:),O_r(k,:),H_r(k,:),L_r(k,:),2,.5,0.5);
 CandlestickPlot(1:N,Close(k,:),Open(k,:),High(k,:),Low(k,:),1,.25,1.0);
+InteractiveStockChart(symbols,dates,Close,Open,High,Low,Volume);
 
 
 if predictXi
   % todo, r_sqr is very good, but not enough data is being represented
-figure(2);
-plot(r_sqr)
+  figure(2);
+  plot(r_sqr)
 end

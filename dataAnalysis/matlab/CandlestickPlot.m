@@ -9,7 +9,7 @@ function CandlestickPlot(I,Close,Open,High,Low, ...
   % w;     width of rectangle
   % alpha: transparency
   
-  figure(1);
+  % figure(1);
   hold on;
 
   if ~exist('alpha','var')

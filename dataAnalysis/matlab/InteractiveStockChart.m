@@ -22,7 +22,7 @@ function varargout = InteractiveStockChart(varargin)
 
 % Edit the above text to modify the response to help InteractiveStockChart
 
-% Last Modified by GUIDE v2.5 04-Jun-2017 22:43:24
+% Last Modified by GUIDE v2.5 05-Jun-2017 21:19:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -335,6 +335,7 @@ function zoom_in_Callback(hObject, eventdata, handles)
     n2 = ceil(x2);
     
     xlim([n1,n2]);
+    set_slider(handles,n1,n2,length(close(k,:)));
     
     % find axis y limits
     y0 = min(low(k,n1:n2));
@@ -425,6 +426,7 @@ function zoom_out_Callback(hObject, eventdata, handles)
       n2 = length(close(1,:));
     end
     xlim([n1,n2]);
+    set_slider(handles,n1,n2,length(close(k,:)));
     
     % find axis y limits
     y0 = min(low(k,n1:n2));
@@ -490,5 +492,40 @@ function update_plots(handles,n1,n2)
   grid on
 
   set(gca,'YAxisLocation','right');
+  
+  set_slider(handles,n1,n2,N);
 
   
+  
+function set_slider(handles,n1,n2,N)
+  % set slider
+  set(handles.slider,'Max',n2);
+  set(handles.slider,'Min',n1);
+  set(handles.slider,'Value',((2*n1+0*n2)/2));
+  set(handles.slider,'SliderStep',[(n2-n1) / (N-1) ,(n2-n1) / (N-1)]);
+
+  
+  
+  
+
+
+% --- Executes on slider movement.
+function slider_Callback(hObject, eventdata, handles)
+% hObject    handle to slider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function slider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end

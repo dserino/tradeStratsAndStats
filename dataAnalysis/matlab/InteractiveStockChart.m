@@ -45,7 +45,9 @@ end
 
 % TODO:
 %  - symbol update from picker
+%  - zoom out, fix near edges
 %  - scroll bar
+%  - reset all buttons in beginning
 %  - candle sticks for multiple days
 %  - add in dates
 %  - tech indicators
@@ -320,6 +322,7 @@ function zoom_in_Callback(hObject, eventdata, handles)
       x_ = xlim;
       cla;
       update_plots(handles,x_(1),x_(2));
+      set_slider(handles,n1,n2,length(close(k,:)));
       return
     end
 
@@ -333,9 +336,16 @@ function zoom_in_Callback(hObject, eventdata, handles)
     % find axis x limits
     n1 = floor(x1);
     n2 = ceil(x2);
+    N = length(close(1,:));
+    if n1 < 1
+      n1 = 1;
+    end
+    if n2 > N
+      n2 = N;
+    end    
     
     xlim([n1,n2]);
-    set_slider(handles,n1,n2,length(close(k,:)));
+    
     
     % find axis y limits
     y0 = min(low(k,n1:n2));
@@ -349,6 +359,8 @@ function zoom_in_Callback(hObject, eventdata, handles)
     y1 = max(volume(k,n1:n2));
 
     ylim([y0,y1]);
+
+    set_slider(handles,n1,n2,length(close(k,:)));
 
   end
     
@@ -491,6 +503,11 @@ function update_plots(handles,n1,n2)
   xlim([n1,n2]);
   grid on
 
+  y0 = min(volume(k,n1:n2));
+  y1 = max(volume(k,n1:n2));
+  
+  ylim([y0,y1]);
+
   set(gca,'YAxisLocation','right');
   
   set_slider(handles,n1,n2,N);
@@ -499,16 +516,65 @@ function update_plots(handles,n1,n2)
   
 function set_slider(handles,n1,n2,N)
   % set slider
-  set(handles.slider,'Max',n2);
-  set(handles.slider,'Min',n1);
-  set(handles.slider,'Value',((2*n1+0*n2)/2));
-  set(handles.slider,'SliderStep',[(n2-n1) / (N-1) ,(n2-n1) / (N-1)]);
+  % set(handles.slider,'Max',n2);
+  % set(handles.slider,'Min',n1);
+  % set(handles.slider,'Value',((n1+n2)/2));
+  % set(handles.slider,'SliderStep',[(n2-n1) / (N-1) ,(n2-n1) / (N-1)]);
+
+  set(handles.slider,'Min',0);
+  set(handles.slider,'Max',1);
+  
+  % number of steps to get from 0 to 1
+  M = (N-1)/(n2-n1);
+  step = abs(1/(M-1+eps));
+
+  % set(handles.slider,'SliderStep',[min([step,1]),step]);
+  set(handles.slider,'SliderStep',[1/(N-1),step])
+  % set(handles.slider,'Value', ((n1+n2)/2 - 1) / (N-1) );
+  
+  n1_min = 1;
+  n1_max = N-(n2-n1);
+
+  v = (n1-1)/(n1_max-n1_min);
+  if n1_max-n1_min == 0
+    v = 0;
+  end
+  set(handles.slider,'Value', v );
+  % if N-n2 == 0
+  %   set(handles.slider,'Value', 1 );
+  % else
+  %   set(handles.slider,'Value', (n1-1) / (N-n2) );
+  % end
+  % (n1-1) 
+  % (N-n2-1) 
+
+  % min_ = 1;
+  % max_ = N-n2+1;
+  
+  % set(handles.slider,'Min',min_);
+  % set(handles.slider,'Max',max_);
+  
+  % % number of steps to get from 1 to N
+  % M = (N-1)/(n2-n1);
+  % step = abs(1/(M-1+eps));
+
+  % v = n1;
+  
+  % set(handles.slider,'SliderStep',[min([step,1]),step])
+
+  % set(handles.slider,'Value', v );
+  
+  % v
+  % step
+  % min_
+  % max_
+  
 
   
   
+% need to figure out equations, I think value is wrong. maybe use
+% n1 instead...
   
-
-
 % --- Executes on slider movement.
 function slider_Callback(hObject, eventdata, handles)
 % hObject    handle to slider (see GCBO)
@@ -517,6 +583,73 @@ function slider_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% M = 1 + 1/step = (n2 - n1) / (N - 1)
+% n1_min = 1;
+% n1_max = N-(n2-n1);
+% v = (n1-1)/(n1_max-n1_min);
+
+
+
+%% get data
+data = get(handles.axes1,'UserData');
+symbols = data{1};
+dates = data{2};
+close = data{3};
+open = data{4};
+high = data{5};
+low = data{6};
+volume = data{7};
+k = 1;
+
+%% get positions of slider
+step = get(hObject,'SliderStep');
+v    = get(handles.slider,'Value');
+
+%% convert positions to x locations
+M = 1 + 1/step(2);
+N = length(close(k,:));
+
+% v
+% b1 = (N-1)/M
+% b2 = 2*(1+v*(N-1))
+
+% n2 = (b1+b2)/2
+% n1 = (b2-b1)/2
+
+n1 = 1 + v*(N - (N-1)/M - 1);
+n2 = n1 + (N-1)/M;
+
+%% set x limits on graph
+%% figure out new y limits
+% xlimits
+axes(handles.axes1);
+
+n1 = round(n1);
+n2 = round(n2);
+if n1 < 1
+  n1 = 1;
+end
+if n2 > N
+  n2 = N;
+end
+
+xlim([n1,n2])
+
+% find axis y limits
+y0 = min(low(k,n1:n2));
+y1 = max(high(k,n1:n2));
+ylim([y0,y1]);
+
+%% do the same for axes 2
+axes(handles.axes2);
+xlim([n1,n2])
+
+y0 = min(volume(k,n1:n2));
+y1 = max(volume(k,n1:n2));
+
+ylim([y0,y1]);
+
 
 
 % --- Executes during object creation, after setting all properties.

@@ -15,7 +15,13 @@ function CandlestickPlot(I,Close,Open,High,Low, ...
   if ~exist('alpha','var')
     alpha = 1;
   end
-
+  if ~exist('lw','var')
+    lw = 2;
+  end
+  if ~exist('w','var')
+    w = .4;
+  end
+  
   n_green = [];
   n_red   = [];
   v_green = [];

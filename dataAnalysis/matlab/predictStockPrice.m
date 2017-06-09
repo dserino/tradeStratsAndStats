@@ -254,9 +254,9 @@ end
 
 %% plot
 % todo, input figure number
-figure(1);
-CandlestickPlot(1:N,C_r(k,:),O_r(k,:),H_r(k,:),L_r(k,:),2,.5,0.5);
-CandlestickPlot(1:N,Close(k,:),Open(k,:),High(k,:),Low(k,:),1,.25,1.0);
+% figure(1);
+% CandlestickPlot(1:N,C_r(k,:),O_r(k,:),H_r(k,:),L_r(k,:),2,.5,0.5);
+% CandlestickPlot(1:N,Close(k,:),Open(k,:),High(k,:),Low(k,:),1,.25,1.0);
 InteractiveStockChart(symbols,dates,Close,Open,High,Low,Volume);
 
 

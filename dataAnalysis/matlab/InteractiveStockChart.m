@@ -33,13 +33,13 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
+  gui_State.gui_Callback = str2func(varargin{1});
 end
 
 if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+  [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    gui_mainfcn(gui_State, varargin{:});
+  gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
 
@@ -74,6 +74,13 @@ guidata(hObject, handles);
 
 % UIWAIT makes InteractiveStockChart wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
+
+%% set listener for scroll bar
+% bug, need to fix
+% if ~isfield(handles,'hListener')
+%   handles.hListener = ...
+%       addlistener(handles.slider,'ContinuousValueChange',@respondToContSlideCallback);
+% end
 
 %% save user data to axes1
 if ~isempty(varargin)
@@ -128,7 +135,7 @@ function slider1_CreateFcn(hObject, eventdata, handles)
 
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
+  set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
 
@@ -151,7 +158,7 @@ function popupmenu_symbols_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+  set(hObject,'BackgroundColor','white');
 end
 
 
@@ -174,7 +181,7 @@ function popupmenu2_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+  set(hObject,'BackgroundColor','white');
 end
 
 
@@ -197,7 +204,7 @@ function popupmenu3_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+  set(hObject,'BackgroundColor','white');
 end
 
 
@@ -220,7 +227,7 @@ function popupmenu_analysis_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+  set(hObject,'BackgroundColor','white');
 end
 
 
@@ -243,7 +250,7 @@ function popupmenu_period_CreateFcn(hObject, eventdata, handles)
 % Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+  set(hObject,'BackgroundColor','white');
 end
 
 
@@ -255,115 +262,115 @@ function zoom_in_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % get current color and if button is clicked
-  color = get(handles.popupmenu_symbols,'BackgroundColor');
+color = get(handles.popupmenu_symbols,'BackgroundColor');
+
+isClicked = get(handles.zoom_out,'UserData');
+
+if isClicked
+  % if already clicked unclick
+  set(handles.zoom_in,'UserData',0);
+
+  color_new = get(handles.popupmenu_symbols,'BackgroundColor');
+  set(handles.zoom_in,'BackgroundColor',color_new);
   
-  isClicked = get(handles.zoom_out,'UserData');
+  return
+else
+  % not clicked yet
+  set(handles.zoom_in,'UserData',1);
+  isClicked = 1;
 
-  if isClicked
-    % if already clicked unclick
-    set(handles.zoom_in,'UserData',0);
+  color_new = color/1.5;
+  set(handles.zoom_in,'BackgroundColor',color_new);
+end
 
+data = get(handles.axes1,'UserData');
+symbols = data{1};
+dates = data{2};
+close = data{3};
+open = data{4};
+high = data{5};
+low = data{6};
+volume = data{7};
+
+k = 1;
+
+while true
+  
+  isClicked = get(handles.zoom_in,'UserData');
+  if ~isClicked
+    return
+  end
+  
+  axes(handles.axes1)
+  hold on
+  y_ = ylim;
+  
+  [x1,y,~] = ginput(1);
+  
+  % check to see if user unclicked
+  if y > y_(2)
     color_new = get(handles.popupmenu_symbols,'BackgroundColor');
     set(handles.zoom_in,'BackgroundColor',color_new);
-    
+    set(handles.zoom_in,'UserData',0);
     return
-  else
-    % not clicked yet
-    set(handles.zoom_in,'UserData',1);
-    isClicked = 1;
+  end
+  
+  % draw ref line
+  plot([x1,x1],[y_(1),y_(2)],'b');
+  
+  [x2,y,~] = ginput(1);
 
-    color_new = color/1.5;
+  % check to see if user unclicked
+  if y > y_(2)
+    color_new = get(handles.popupmenu_symbols,'BackgroundColor');
     set(handles.zoom_in,'BackgroundColor',color_new);
-  end
-  
-  data = get(handles.axes1,'UserData');
-  symbols = data{1};
-  dates = data{2};
-  close = data{3};
-  open = data{4};
-  high = data{5};
-  low = data{6};
-  volume = data{7};
-
-  k = 1;
-  
-  while true
-    
-    isClicked = get(handles.zoom_in,'UserData');
-    if ~isClicked
-      return
-    end
-    
-    axes(handles.axes1)
-    hold on
-    y_ = ylim;
-    
-    [x1,y,~] = ginput(1);
-    
-    % check to see if user unclicked
-    if y > y_(2)
-      color_new = get(handles.popupmenu_symbols,'BackgroundColor');
-      set(handles.zoom_in,'BackgroundColor',color_new);
-      set(handles.zoom_in,'UserData',0);
-      return
-    end
-    
-    % draw ref line
-    plot([x1,x1],[y_(1),y_(2)],'b');
-    
-    [x2,y,~] = ginput(1);
-
-    % check to see if user unclicked
-    if y > y_(2)
-      color_new = get(handles.popupmenu_symbols,'BackgroundColor');
-      set(handles.zoom_in,'BackgroundColor',color_new);
-      set(handles.zoom_in,'UserData',0);
-      % need to undo last plot
-      x_ = xlim;
-      cla;
-      update_plots(handles,x_(1),x_(2));
-      set_slider(handles,n1,n2,length(close(k,:)));
-      return
-    end
-
-    % draw ref line
-    plot([x2,x2],[y_(1),y_(2)],'b');
-
+    set(handles.zoom_in,'UserData',0);
+    % need to undo last plot
+    x_ = xlim;
     cla;
-    update_plots(handles);
-    
-    axes(handles.axes1)
-    % find axis x limits
-    n1 = floor(x1);
-    n2 = ceil(x2);
-    N = length(close(1,:));
-    if n1 < 1
-      n1 = 1;
-    end
-    if n2 > N
-      n2 = N;
-    end    
-    
-    xlim([n1,n2]);
-    
-    
-    % find axis y limits
-    y0 = min(low(k,n1:n2));
-    y1 = max(high(k,n1:n2));
-    ylim([y0,y1]);
-    
-    axes(handles.axes2);
-    xlim([n1,n2]);
-
-    y0 = min(volume(k,n1:n2));
-    y1 = max(volume(k,n1:n2));
-
-    ylim([y0,y1]);
-
+    update_plots(handles,x_(1),x_(2));
     set_slider(handles,n1,n2,length(close(k,:)));
-
+    return
   end
-    
+
+  % draw ref line
+  plot([x2,x2],[y_(1),y_(2)],'b');
+
+  cla;
+  update_plots(handles);
+  
+  axes(handles.axes1)
+  % find axis x limits
+  n1 = floor(x1);
+  n2 = ceil(x2);
+  N = length(close(1,:));
+  if n1 < 1
+    n1 = 1;
+  end
+  if n2 > N
+    n2 = N;
+  end    
+  
+  xlim([n1,n2]);
+  
+  
+  % find axis y limits
+  y0 = min(low(k,n1:n2));
+  y1 = max(high(k,n1:n2));
+  ylim([y0,y1]);
+  
+  axes(handles.axes2);
+  xlim([n1,n2]);
+
+  y0 = min(volume(k,n1:n2));
+  y1 = max(volume(k,n1:n2));
+
+  ylim([y0,y1]);
+
+  set_slider(handles,n1,n2,length(close(k,:)));
+
+end
+
 % --- Executes on button press in zoom_out.
 function zoom_out_Callback(hObject, eventdata, handles)
 % hObject    handle to zoom_out (see GCBO)
@@ -371,215 +378,252 @@ function zoom_out_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % get current color and if button is clicked
-  color = get(handles.popupmenu_symbols,'BackgroundColor');
-      
+color = get(handles.popupmenu_symbols,'BackgroundColor');
+
+isClicked = get(handles.zoom_out,'UserData');
+
+if isClicked
+  % if already clicked unclick
+  set(handles.zoom_out,'UserData',0);
+
+  color_new = get(handles.popupmenu_symbols,'BackgroundColor');
+  set(handles.zoom_out,'BackgroundColor',color_new);
+  
+  return
+else
+  % not clicked yet
+  set(handles.zoom_out,'UserData',1);
+  isClicked = 1;
+
+  color_new = color/1.5;
+  set(handles.zoom_out,'BackgroundColor',color_new);
+end
+
+data = get(handles.axes1,'UserData');
+symbols = data{1};
+dates = data{2};
+close = data{3};
+open = data{4};
+high = data{5};
+low = data{6};
+volume = data{7};
+
+k = 1;
+
+axes(handles.axes1)
+
+while true
   isClicked = get(handles.zoom_out,'UserData');
+  if ~isClicked
+    return
+  end
+  
+  [x,y,~] = ginput(1);
 
-  if isClicked
-    % if already clicked unclick
-    set(handles.zoom_out,'UserData',0);
-
+  % check to see if user unclicked
+  y0 = ylim;
+  if y > y0(2)
     color_new = get(handles.popupmenu_symbols,'BackgroundColor');
     set(handles.zoom_out,'BackgroundColor',color_new);
-    
+    set(handles.zoom_out,'UserData',0);
     return
-  else
-    % not clicked yet
-    set(handles.zoom_out,'UserData',1);
-    isClicked = 1;
-
-    color_new = color/1.5;
-    set(handles.zoom_out,'BackgroundColor',color_new);
-  end
-  
-  data = get(handles.axes1,'UserData');
-  symbols = data{1};
-  dates = data{2};
-  close = data{3};
-  open = data{4};
-  high = data{5};
-  low = data{6};
-  volume = data{7};
-
-  k = 1;
-  
-  axes(handles.axes1)
-  
-  while true
-    isClicked = get(handles.zoom_out,'UserData');
-    if ~isClicked
-      return
-    end
-    
-    [x,y,~] = ginput(1);
-
-    % check to see if user unclicked
-    y0 = ylim;
-    if y > y0(2)
-      color_new = get(handles.popupmenu_symbols,'BackgroundColor');
-      set(handles.zoom_out,'BackgroundColor',color_new);
-      set(handles.zoom_out,'UserData',0);
-      return
-    end
-
-    % find axis x limist
-    x0 = xlim;
-    l0 = x0(2)-x0(1);
-
-    z_factor = 1.5;
-    l = l0*1.5;
-    n1 = floor(x-l/2);
-    n2 = ceil(x+l/2);
-    
-    if n1 < 1
-      n1 = 1;
-    end
-    if n2 > length(close(1,:))
-      n2 = length(close(1,:));
-    end
-    xlim([n1,n2]);
-    set_slider(handles,n1,n2,length(close(k,:)));
-    
-    % find axis y limits
-    y0 = min(low(k,n1:n2));
-    y1 = max(high(k,n1:n2));
-    ylim([y0,y1]);
-    
-    axes(handles.axes2);
-    xlim([n1,n2]);
-
-    y0 = min(volume(k,n1:n2));
-    y1 = max(volume(k,n1:n2));
-
-    ylim([y0,y1]);
-    
-
-
   end
 
-  
-  
-  
-  
-%% general functions
-function update_plots(handles,n1,n2)
+  % find axis x limist
+  x0 = xlim;
+  l0 = x0(2)-x0(1);
 
-  data = get(handles.axes1,'UserData');
-  symbols = data{1};
-  dates = data{2};
-  close = data{3};
-  open = data{4};
-  high = data{5};
-  low = data{6};
-  volume = data{7};
-
-  %% plot
-  axes(handles.axes1);
-  k = 1; % todo
-  N = length(close(k,:));
-
-  % find axis x limits
-  if ~exist('n1','var')
+  z_factor = 1.5;
+  l = l0*1.5;
+  n1 = floor(x-l/2);
+  n2 = ceil(x+l/2);
+  
+  if n1 < 1
     n1 = 1;
-    n2 = N;
   end
-  
-  CandlestickPlot(n1:n2,close(k,n1:n2),open(k,n1:n2),high(k,n1:n2),low(k,n1:n2),1,0.35,1.0);
-
+  if n2 > length(close(1,:))
+    n2 = length(close(1,:));
+  end
   xlim([n1,n2]);
-    
+  set_slider(handles,n1,n2,length(close(k,:)));
+  
   % find axis y limits
   y0 = min(low(k,n1:n2));
   y1 = max(high(k,n1:n2));
   ylim([y0,y1]);
-
+  
   axes(handles.axes2);
-  k = 1;
-  N = length(close(k,:));
-
-  bar((1:N)+0.5,volume(k,:));
-
-  % find axis x limits
   xlim([n1,n2]);
-  grid on
 
   y0 = min(volume(k,n1:n2));
   y1 = max(volume(k,n1:n2));
-  
+
   ylim([y0,y1]);
+  
 
-  set(gca,'YAxisLocation','right');
-  
-  set_slider(handles,n1,n2,N);
 
-  
-  
+end
+
+
+
+
+
+%% general functions
+function update_plots(handles,n1,n2)
+
+data = get(handles.axes1,'UserData');
+symbols = data{1};
+dates = data{2};
+close = data{3};
+open = data{4};
+high = data{5};
+low = data{6};
+volume = data{7};
+
+%% plot
+axes(handles.axes1);
+k = 1; % todo
+N = length(close(k,:));
+
+% find axis x limits
+if ~exist('n1','var')
+  n1 = 1;
+  n2 = N;
+end
+
+CandlestickPlot(n1:n2,close(k,n1:n2),open(k,n1:n2),high(k,n1:n2),low(k,n1:n2),1,0.35,1.0);
+
+xlim([n1,n2]);
+
+% find axis y limits
+y0 = min(low(k,n1:n2));
+y1 = max(high(k,n1:n2));
+ylim([y0,y1]);
+
+axes(handles.axes2);
+k = 1;
+N = length(close(k,:));
+
+bar((1:N)+0.5,volume(k,:));
+
+% find axis x limits
+xlim([n1,n2]);
+grid on
+
+y0 = min(volume(k,n1:n2));
+y1 = max(volume(k,n1:n2));
+
+ylim([y0,y1]);
+
+set(gca,'YAxisLocation','right');
+
+set_slider(handles,n1,n2,N);
+
+
+
 function set_slider(handles,n1,n2,N)
-  % set slider
-  % set(handles.slider,'Max',n2);
-  % set(handles.slider,'Min',n1);
-  % set(handles.slider,'Value',((n1+n2)/2));
-  % set(handles.slider,'SliderStep',[(n2-n1) / (N-1) ,(n2-n1) / (N-1)]);
+% set slider
+% set(handles.slider,'Max',n2);
+% set(handles.slider,'Min',n1);
+% set(handles.slider,'Value',((n1+n2)/2));
+% set(handles.slider,'SliderStep',[(n2-n1) / (N-1) ,(n2-n1) / (N-1)]);
 
-  set(handles.slider,'Min',0);
-  set(handles.slider,'Max',1);
-  
-  % number of steps to get from 0 to 1
-  M = (N-1)/(n2-n1);
-  step = abs(1/(M-1+eps));
+set(handles.slider,'Min',0);
+set(handles.slider,'Max',1);
 
-  % set(handles.slider,'SliderStep',[min([step,1]),step]);
-  set(handles.slider,'SliderStep',[1/(N-1),step])
-  % set(handles.slider,'Value', ((n1+n2)/2 - 1) / (N-1) );
-  
-  n1_min = 1;
-  n1_max = N-(n2-n1);
+% number of steps to get from 0 to 1
+M = (N-1)/(n2-n1);
+step = abs(1/(M-1+eps));
 
-  v = (n1-1)/(n1_max-n1_min);
-  if n1_max-n1_min == 0
-    v = 0;
-  end
-  set(handles.slider,'Value', v );
-  % if N-n2 == 0
-  %   set(handles.slider,'Value', 1 );
-  % else
-  %   set(handles.slider,'Value', (n1-1) / (N-n2) );
-  % end
-  % (n1-1) 
-  % (N-n2-1) 
+n1_min = 1;
+n1_max = N-(n2-n1);
 
-  % min_ = 1;
-  % max_ = N-n2+1;
-  
-  % set(handles.slider,'Min',min_);
-  % set(handles.slider,'Max',max_);
-  
-  % % number of steps to get from 1 to N
-  % M = (N-1)/(n2-n1);
-  % step = abs(1/(M-1+eps));
+v = (n1-1)/(n1_max-n1_min);
+if n1_max-n1_min == 0
+  set(handles.slider,'SliderStep',[0,step]);
+else
+  set(handles.slider,'SliderStep',[1/(n1_max-n1_min),step]);
+end
+set(handles.slider,'Value', v );
 
-  % v = n1;
-  
-  % set(handles.slider,'SliderStep',[min([step,1]),step])
 
-  % set(handles.slider,'Value', v );
-  
-  % v
-  % step
-  % min_
-  % max_
-  
-
-  
-  
-% need to figure out equations, I think value is wrong. maybe use
-% n1 instead...
-  
 % --- Executes on slider movement.
 function slider_Callback(hObject, eventdata, handles)
 % hObject    handle to slider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% M = 1 + 1/step = (n2 - n1) / (N - 1)
+% n1_min = 1;
+% n1_max = N-(n2-n1);
+% v = (n1-1)/(n1_max-n1_min);
+
+%% get data
+data = get(handles.axes1,'UserData');
+symbols = data{1};
+dates = data{2};
+close = data{3};
+open = data{4};
+high = data{5};
+low = data{6};
+volume = data{7};
+k = 1;
+
+%% get positions of slider
+step = get(hObject,'SliderStep');
+v    = get(handles.slider,'Value');
+
+%% convert positions to x locations
+M = 1 + 1/step(2);
+N = length(close(k,:));
+
+% v
+% b1 = (N-1)/M
+% b2 = 2*(1+v*(N-1))
+
+% n2 = (b1+b2)/2
+% n1 = (b2-b1)/2
+
+n1 = 1 + v*(N - (N-1)/M - 1);
+n2 = n1 + (N-1)/M;
+
+%% set x limits on graph
+%% figure out new y limits
+% xlimits
+axes(handles.axes1);
+
+n1 = round(n1);
+n2 = round(n2);
+if n1 < 1
+  n1 = 1;
+end
+if n2 > N
+  n2 = N;
+end
+
+xlim([n1,n2])
+
+% find axis y limits
+y0 = min(low(k,n1:n2));
+y1 = max(high(k,n1:n2));
+ylim([y0,y1]);
+
+%% do the same for axes 2
+axes(handles.axes2);
+xlim([n1,n2])
+
+y0 = min(volume(k,n1:n2));
+y1 = max(volume(k,n1:n2));
+
+ylim([y0,y1]);
+
+%% continuous slider callback
+function respondToContSlideCallback(hObject,eventdata)
+ % handles = guidata(hObject);
+  handles = guihandles(hObject);
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
@@ -649,8 +693,8 @@ y0 = min(volume(k,n1:n2));
 y1 = max(volume(k,n1:n2));
 
 ylim([y0,y1]);
-
-
+ 
+ 
 
 % --- Executes during object creation, after setting all properties.
 function slider_CreateFcn(hObject, eventdata, handles)
@@ -660,5 +704,6 @@ function slider_CreateFcn(hObject, eventdata, handles)
 
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
+  set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+

@@ -114,3 +114,4 @@ plot(I,x_high(1)*I+x_high(2),'m--')
 
 xlabel('days')
 ylabel('price')
+title(symbols{k})

@@ -5,16 +5,6 @@ clear; close all;
 % minimizing the error of approximation. fmincon is used to solve
 % this linear minimization problem
 
-%% inputs
-Nlr =  20; % smooth data using this many days
-Nte =   3; % number of look back points for extrapolation
-Ne  = 100; % length of extrapolation data matrix 
-Ntr =  10; % number of look back points for regression
-Nr  = 400; % length of regression data matrix
-
-predictMu = false;
-predictXi = false;
-
 % need to change this
 dir = '~/tradeStratsAndStats/dataAnalysis/matlab/';
 

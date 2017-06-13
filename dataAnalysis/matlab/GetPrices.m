@@ -7,7 +7,7 @@ function [High,Low,Close,Open] = GetPrices(data,N,Ns)
   for s = 1:Ns
     High(s,:)     = data{s}(:,2);
     Low(s,:)      = data{s}(:,3);
-    Close(s,:)    = data{s}(:,4);
+    Close(s,:)    = data{s}(:,6);
     Open(s,:)     = data{s}(:,1);
   end
   % High(end,1:4)

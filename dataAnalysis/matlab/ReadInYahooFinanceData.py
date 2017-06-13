@@ -5,7 +5,7 @@ import urllib
 import urllib2
 import time
 import datetime
-
+import ssl
 
 if __name__ == '__main__':
     symbol = sys.argv[1]
@@ -49,7 +49,9 @@ if __name__ == '__main__':
     data = urllib.urlencode(param)
 
     request  = urllib2.Request(url,data,header_params)
-    response = urllib2.urlopen(request)
+    gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+    response = urllib2.urlopen(request,context=gcontext)
+
 
     ### write to file 
     filename = "/home/dan/tabletest.csv"
